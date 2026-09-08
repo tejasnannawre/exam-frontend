@@ -372,11 +372,10 @@ const StudentActiveTest = ({ testId }) => {
             </button>
             
             <button 
-              onClick={goToNext}
-              disabled={currentQIndex === questions.length - 1}
-              style={{ padding: '12px 24px', backgroundColor: currentQIndex === questions.length - 1 ? '#f3f4f6' : '#2563eb', color: currentQIndex === questions.length - 1 ? '#9ca3af' : 'white', border: currentQIndex === questions.length - 1 ? '1px solid #d1d5db' : 'none', borderRadius: '8px', fontWeight: 'bold', cursor: currentQIndex === questions.length - 1 ? 'not-allowed' : 'pointer' }}
+              onClick={currentQIndex === questions.length - 1 ? () => setShowSubmitModal(true) : goToNext}
+              style={{ padding: '12px 24px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
             >
-              Save & Next
+              {currentQIndex === questions.length - 1 ? 'Submit Test' : 'Save & Next'}
             </button>
           </div>
         </div>
@@ -460,7 +459,11 @@ const StudentActiveTest = ({ testId }) => {
               <button onClick={() => setShowSubmitModal(false)} style={{ flex: 1, padding: '12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', color: '#374151', fontWeight: 'bold', cursor: 'pointer' }}>
                 Go Back
               </button>
-              <button onClick={() => submitTest(false)} style={{ flex: 1, padding: '12px', backgroundColor: '#9333ea', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+              <button onClick={() => {
+                if (window.confirm("Are you sure you want to submit? You cannot change your answers later.")) {
+                  submitTest(false);
+                }
+              }} style={{ flex: 1, padding: '12px', backgroundColor: '#9333ea', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
                 Yes, Submit
               </button>
             </div>

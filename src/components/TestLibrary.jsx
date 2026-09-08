@@ -26,6 +26,9 @@ const TestLibrary = () => {
   }, []);
 
   const updateStatus = async (testId, newStatus, pin) => {
+    if (newStatus === 'active' && !window.confirm("Are you sure you want to publish this test? Students will be able to access it.")) return;
+    if (newStatus === 'completed' && !window.confirm("Are you sure you want to end this exam? Students will no longer be able to submit.")) return;
+
     try {
       await axios.put(`/api/exam/tests/${testId}/status`, { status: newStatus });
       fetchTests();
