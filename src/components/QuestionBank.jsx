@@ -122,7 +122,7 @@ const QuestionBank = () => {
         </div>
       ) : (
         <div style={{ overflowX: 'auto', maxHeight: '600px', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', fontSize: '14px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', fontSize: '14px', minWidth: '900px' }}>
             <thead style={{ backgroundColor: '#f9fafb', position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
               <tr>
                 <th style={{ padding: '16px 20px', textAlign: 'left', color: '#374151', fontWeight: '600', letterSpacing: '0.025em' }}>Question Details</th>

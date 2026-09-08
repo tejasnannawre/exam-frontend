@@ -8,6 +8,14 @@ const ProfessorDashboard = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordMessage, setPasswordMessage] = useState({ text: '', type: '' });
 
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -51,6 +59,41 @@ const ProfessorDashboard = () => {
     }
   };
 
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage({ text: 'New passwords do not match.', type: 'error' });
+      return;
+    }
+    setPasswordMessage({ text: '', type: '' });
+    
+    try {
+      const response = await fetch(`http://${window.location.hostname}:8000/api/professor/update-password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: 'admin',
+          current_password: passwordForm.currentPassword,
+          new_password: passwordForm.newPassword
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setPasswordMessage({ text: data.message || 'Password updated successfully.', type: 'success' });
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+          setPasswordMessage({ text: '', type: '' });
+        }, 2000);
+      } else {
+        setPasswordMessage({ text: data.detail || 'Failed to update password.', type: 'error' });
+      }
+    } catch (error) {
+      setPasswordMessage({ text: 'An error occurred. Is the backend running?', type: 'error' });
+      console.error("Password update error:", error);
+    }
+  };
+
   const tabStyle = (isActive) => ({
     padding: '10px 20px',
     cursor: 'pointer',
@@ -64,9 +107,22 @@ const ProfessorDashboard = () => {
 
   return (
     <div style={{ padding: '30px', maxWidth: '900px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      <h2 style={{ color: '#333', marginBottom: '20px' }}>Professor Dashboard</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ color: '#333', margin: 0 }}>Professor Dashboard</h2>
+        <button 
+          onClick={() => setShowPasswordModal(true)} 
+          style={{ padding: '8px 16px', backgroundColor: '#4b5563', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+        >
+          Change Password
+        </button>
+      </div>
       
-      <div style={{ display: 'flex', flexWrap: 'wrap', borderBottom: '1px solid #e5e7eb', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', whiteSpace: 'nowrap', borderBottom: '1px solid #e5e7eb', marginBottom: '20px', scrollbarWidth: 'none', msOverflowStyle: 'none' }} className="no-scrollbar">
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
         <button style={tabStyle(activeTab === 'library')} onClick={() => setActiveTab('library')}>
           Test Library
         </button>
@@ -125,6 +181,66 @@ const ProfessorDashboard = () => {
       
       {activeTab === 'library' && <TestLibrary />}
       
+      {/* Password Modal */}
+      {showPasswordModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
+          <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#111827' }}>Change Password</h3>
+            
+            {passwordMessage.text && (
+              <div style={{ padding: '10px', marginBottom: '15px', borderRadius: '6px', backgroundColor: passwordMessage.type === 'success' ? '#d1fae5' : '#fee2e2', color: passwordMessage.type === 'success' ? '#065f46' : '#991b1b', fontSize: '14px', border: `1px solid ${passwordMessage.type === 'success' ? '#a7f3d0' : '#fecaca'}` }}>
+                {passwordMessage.text}
+              </div>
+            )}
+            
+            <form onSubmit={handlePasswordUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '5px' }}>Current Password</label>
+                <input 
+                  type="password" required 
+                  value={passwordForm.currentPassword} 
+                  onChange={e => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '5px' }}>New Password</label>
+                <input 
+                  type="password" required 
+                  value={passwordForm.newPassword} 
+                  onChange={e => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '5px' }}>Confirm New Password</label>
+                <input 
+                  type="password" required 
+                  value={passwordForm.confirmPassword} 
+                  onChange={e => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', boxSizing: 'border-box' }}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowPasswordModal(false)}
+                  style={{ padding: '10px 15px', backgroundColor: '#f3f4f6', color: '#4b5563', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  style={{ padding: '10px 15px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
