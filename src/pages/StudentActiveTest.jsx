@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const StudentActiveTest = ({ testId }) => {
-  const [authStage, setAuthStage] = useState(true); // true = auth screen, false = test screen
-  const [testData, setTestData] = useState(null); // the verified test data
+  const [authStage, setAuthStage] = useState(true);
+  const [testData, setTestData] = useState(null);
   const [questions, setQuestions] = useState([]);
   
   // Auth Form State
@@ -15,9 +15,9 @@ const StudentActiveTest = ({ testId }) => {
 
   // Test Engine State
   const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); // { [q._id]: "A", "B", etc. }
-  const [reviewStatus, setReviewStatus] = useState({}); // { [index]: boolean }
-  const [visitedStatus, setVisitedStatus] = useState({}); // { [index]: boolean }
+  const [answers, setAnswers] = useState({});
+  const [reviewStatus, setReviewStatus] = useState({});
+  const [visitedStatus, setVisitedStatus] = useState({});
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   
   const [warnings, setWarnings] = useState(0);
@@ -41,7 +41,7 @@ const StudentActiveTest = ({ testId }) => {
       
       if (newWarnings >= 3) {
         setIsDisqualified(true);
-        submitTest(true); // force submit on disqualify
+        submitTest(true);
       } else {
         alert(`WARNING ${newWarnings}/3: ${reason}\n\nOn the 3rd strike, your test will be terminated and submitted automatically.`);
       }
@@ -68,7 +68,6 @@ const StudentActiveTest = ({ testId }) => {
     };
   }, [authStage, isDisqualified, testSubmitted]);
 
-  // Mark current question as visited
   useEffect(() => {
     if (!authStage && questions.length > 0) {
       setVisitedStatus(prev => ({ ...prev, [currentQIndex]: true }));
@@ -97,7 +96,6 @@ const StudentActiveTest = ({ testId }) => {
       setAuthStage(false);
       setVisitedStatus({ 0: true });
 
-      // Force Fullscreen
       document.documentElement.requestFullscreen().catch((err) => {
         console.error("Error attempting to enable fullscreen mode:", err);
         alert("Please allow full-screen mode to take this test.");
@@ -155,14 +153,12 @@ const StudentActiveTest = ({ testId }) => {
         RollNumber: rollNumber,
         Answers: answers
       };
-      console.log("Submitting Payload: ", payload);
       
       const res = await axios.post('/api/exam/submit-test', payload);
       
       setTestSubmitted(true);
       setFinalScore(res.data);
       
-      // Exit fullscreen if possible
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.error(err));
       }
@@ -176,40 +172,41 @@ const StudentActiveTest = ({ testId }) => {
 
   if (testSubmitted) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0fdf4', padding: '20px', textAlign: 'center' }}>
-        <div style={{ backgroundColor: 'white', padding: '50px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', maxWidth: '500px', width: '100%' }}>
-          
-          <div style={{ width: '80px', height: '80px', backgroundColor: '#dcfce7', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 24px auto' }}>
-            <svg style={{ width: '40px', height: '40px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+      <div className="flex-col items-center justify-center app-container" style={{ backgroundColor: '#f0fdf4', padding: '2rem' }}>
+        <div className="card text-center" style={{ maxWidth: '500px', width: '100%', padding: '3rem 2rem' }}>
+          <div style={{ width: '80px', height: '80px', backgroundColor: '#dcfce7', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', margin: '0 auto 1.5rem auto' }}>
+            <svg style={{ width: '40px', height: '40px', color: '#16a34a' }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
           </div>
           
-          <h1 style={{ color: '#166534', margin: '0 0 10px 0', fontSize: '28px', fontWeight: '800' }}>Test Submitted!</h1>
-          <p style={{ color: '#4b5563', fontSize: '16px', marginBottom: '30px' }}>Your responses have been securely saved.</p>
+          <h1 style={{ color: '#166534', margin: '0 0 0.5rem 0' }}>Test Submitted!</h1>
+          <p className="text-muted mb-4">Your responses have been securely saved.</p>
           
           {isDisqualified && (
-            <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '15px', borderRadius: '8px', marginBottom: '25px', fontWeight: '600', fontSize: '14px', border: '1px solid #f87171' }}>
+            <div className="alert alert-error mb-4" style={{ fontWeight: '600' }}>
               Your test was automatically submitted because you violated the anti-cheat rules (3 strikes).
             </div>
           )}
           
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '30px' }}>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>Student</p>
-              <p style={{ margin: 0, fontSize: '16px', color: '#1f2937', fontWeight: '600' }}>{name}</p>
+          <div className="flex justify-center gap-4 mb-4">
+            <div className="text-right">
+              <p className="text-muted" style={{ margin: 0, fontSize: '0.875rem' }}>Student</p>
+              <p style={{ margin: 0, fontWeight: '600' }}>{name}</p>
             </div>
-            <div style={{ width: '1px', backgroundColor: '#e5e7eb' }}></div>
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ margin: 0, fontSize: '14px', color: '#6b7280' }}>Roll Number</p>
-              <p style={{ margin: 0, fontSize: '16px', color: '#1f2937', fontWeight: '600' }}>{rollNumber}</p>
+            <div style={{ width: '1px', backgroundColor: 'var(--border)' }}></div>
+            <div className="text-left">
+              <p className="text-muted" style={{ margin: 0, fontSize: '0.875rem' }}>Roll Number</p>
+              <p style={{ margin: 0, fontWeight: '600' }}>{rollNumber}</p>
             </div>
           </div>
           
-          <div style={{ padding: '30px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-            <p style={{ margin: 0, fontSize: '14px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Final Score</p>
-            <h2 style={{ margin: '10px 0 0 0', fontSize: '48px', color: '#0f172a', fontWeight: '800' }}>{finalScore?.score} <span style={{ fontSize: '24px', color: '#94a3b8' }}>/ {finalScore?.total}</span></h2>
+          <div style={{ padding: '2rem', backgroundColor: '#f8fafc', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+            <p className="text-muted" style={{ margin: 0, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Final Score</p>
+            <h2 style={{ margin: '0.5rem 0 0 0', fontSize: '3rem', fontWeight: '800' }}>
+              {finalScore?.score} <span className="text-muted" style={{ fontSize: '1.5rem' }}>/ {finalScore?.total}</span>
+            </h2>
           </div>
           
-          <p style={{ marginTop: '30px', color: '#94a3b8', fontSize: '14px' }}>You may now safely close this window.</p>
+          <p className="text-muted mt-4" style={{ fontSize: '0.875rem' }}>You may now safely close this window.</p>
         </div>
       </div>
     );
@@ -217,36 +214,37 @@ const StudentActiveTest = ({ testId }) => {
 
   if (authStage) {
     return (
-      <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafb', padding: '20px' }}>
-        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', maxWidth: '400px', width: '100%' }}>
-          <h2 style={{ textAlign: 'center', color: '#111827', margin: '0 0 30px 0' }}>Join Examination</h2>
-          {authError && <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '12px', borderRadius: '6px', marginBottom: '20px', fontSize: '14px', textAlign: 'center' }}>{authError}</div>}
+      <div className="flex items-center justify-center app-container">
+        <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem' }}>
+          <h2 className="text-center mb-4">Join Examination</h2>
+          {authError && <div className="alert alert-error">{authError}</div>}
           
-          <form onSubmit={verifyPin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Full Name</label>
-              <input type="text" required value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} placeholder="John Doe" />
+          <form onSubmit={verifyPin} className="flex-col gap-3">
+            <div className="form-group">
+              <label className="form-label">Full Name</label>
+              <input type="text" className="form-control" required value={name} onChange={e => setName(e.target.value)} placeholder="John Doe" />
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Roll Number</label>
-              <input type="text" required value={rollNumber} onChange={e => setRollNumber(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', boxSizing: 'border-box' }} placeholder="MCA-001" />
+            <div className="form-group">
+              <label className="form-label">Roll Number</label>
+              <input type="text" className="form-control" required value={rollNumber} onChange={e => setRollNumber(e.target.value)} placeholder="MCA-001" />
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>4-Digit Test PIN</label>
-              <input type="text" required maxLength={4} value={pin} onChange={e => setPin(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', boxSizing: 'border-box', fontSize: '24px', letterSpacing: '8px', textAlign: 'center' }} placeholder="----" />
+            <div className="form-group">
+              <label className="form-label">4-Digit Test PIN</label>
+              <input type="text" className="form-control text-center" required maxLength={4} value={pin} onChange={e => setPin(e.target.value)} placeholder="----" style={{ fontSize: '1.5rem', letterSpacing: '0.5em' }} />
             </div>
             
-            <button type="submit" disabled={authLoading} style={{ padding: '14px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: authLoading ? 'not-allowed' : 'pointer', marginTop: '10px' }}>
+            <button type="submit" disabled={authLoading} className="btn btn-primary mt-2">
               {authLoading ? 'Verifying...' : 'Enter Test'}
             </button>
-            <p style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', margin: 0 }}>This test uses Anti-Cheat. Upon entering, your browser will be forced into Full-Screen mode.</p>
+            <p className="text-muted text-center mt-2" style={{ fontSize: '0.75rem' }}>
+              This test uses Anti-Cheat. Upon entering, your browser will be forced into Full-Screen mode.
+            </p>
           </form>
         </div>
       </div>
     );
   }
 
-  // Calculate stats for sidebar
   const total = questions.length;
   let answeredCount = 0;
   let reviewCount = 0;
@@ -268,52 +266,49 @@ const StudentActiveTest = ({ testId }) => {
 
   const getStatusColor = (index) => {
     const qId = questions[index]._id || questions[index].id;
-    if (reviewStatus[index]) return '#f97316'; // Orange: Marked for Review
-    if (answers[qId]) return '#16a34a'; // Green: Answered
-    if (visitedStatus[index]) return '#ef4444'; // Red: Unanswered / Skipped
-    return '#9ca3af'; // Gray: Not Visited Yet
+    if (reviewStatus[index]) return '#f97316'; // Orange: Review
+    if (answers[qId]) return '#10b981'; // Green: Answered
+    if (visitedStatus[index]) return '#ef4444'; // Red: Unanswered
+    return '#94a3b8'; // Gray: Not Visited
   };
 
-  // Active Test UI
   const q = questions[currentQIndex];
   
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#f3f4f6' }}>
-      
+    <div className="app-container">
       {/* Header */}
-      <div style={{ backgroundColor: 'white', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+      <div className="flex justify-between items-center" style={{ padding: '1rem 1.5rem', backgroundColor: 'var(--surface)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '18px', color: '#111827' }}>{testData?.test_name}</h2>
-          <div style={{ fontSize: '14px', color: '#6b7280', marginTop: '5px' }}>Student: {name} ({rollNumber})</div>
+          <h2 style={{ margin: 0, fontSize: '1.25rem' }}>{testData?.test_name}</h2>
+          <div className="text-muted" style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>Student: {name} ({rollNumber})</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <div style={{ backgroundColor: warnings > 0 ? '#fee2e2' : '#f3f4f6', color: warnings > 0 ? '#dc2626' : '#6b7280', padding: '8px 16px', borderRadius: '9999px', fontWeight: 'bold', fontSize: '14px' }}>
+        <div className="flex items-center gap-3">
+          <div style={{ backgroundColor: warnings > 0 ? '#fef2f2' : '#f1f5f9', color: warnings > 0 ? 'var(--danger)' : 'var(--text-muted)', padding: '0.5rem 1rem', borderRadius: '9999px', fontWeight: '600', fontSize: '0.875rem' }}>
             Strikes: {warnings} / 3
           </div>
-          <button onClick={() => setShowSubmitModal(true)} disabled={submitting} style={{ padding: '10px 20px', backgroundColor: '#9333ea', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+          <button onClick={() => setShowSubmitModal(true)} disabled={submitting} className="btn" style={{ backgroundColor: '#9333ea', color: 'white' }}>
             Submit Exam
           </button>
         </div>
       </div>
 
-      {/* Main Body (Flex wrap for mobile responsiveness) */}
+      {/* Main Body */}
       <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', overflow: 'hidden' }}>
         
-        {/* Left Side: Question Area (75% width on desktop) */}
+        {/* Left Side: Question Area */}
         <div style={{ flex: '1 1 600px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-          <div style={{ padding: '30px', flex: 1 }}>
-            <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}>
-              
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <span style={{ color: '#4b5563', fontSize: '16px', fontWeight: 'bold' }}>Question {currentQIndex + 1} of {questions.length}</span>
-                <span style={{ backgroundColor: '#e5e7eb', color: '#374151', padding: '4px 10px', borderRadius: '6px', fontSize: '14px', fontWeight: '600' }}>{q.Unit}</span>
+          <div style={{ padding: '2rem', flex: 1 }}>
+            <div className="card animate-fade-in" style={{ height: '100%' }}>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-muted" style={{ fontWeight: '600' }}>Question {currentQIndex + 1} of {questions.length}</span>
+                <span style={{ backgroundColor: '#f1f5f9', color: 'var(--text-main)', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem', fontWeight: '600' }}>{q.Unit}</span>
               </div>
 
-              <h3 style={{ fontSize: '20px', color: '#1f2937', lineHeight: '1.5', marginBottom: '30px' }}>{q.Question}</h3>
+              <h3 style={{ fontSize: '1.25rem', lineHeight: '1.5', marginBottom: '2rem' }}>{q.Question}</h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '20px' }}>
+              <div className="flex-col gap-3 mb-4">
                 {['Option_A', 'Option_B', 'Option_C', 'Option_D'].map((optKey, idx) => {
-                  const label = String.fromCharCode(65 + idx); // A, B, C, D
+                  const label = String.fromCharCode(65 + idx);
                   const val = q[optKey];
                   const qId = q._id || q.id;
                   const isSelected = answers[qId] === label;
@@ -323,21 +318,21 @@ const StudentActiveTest = ({ testId }) => {
                       key={optKey}
                       onClick={() => handleAnswerSelect(qId, label)}
                       style={{
-                        padding: '16px',
-                        border: `2px solid ${isSelected ? '#3b82f6' : '#e5e7eb'}`,
-                        backgroundColor: isSelected ? '#eff6ff' : 'white',
-                        borderRadius: '8px',
+                        padding: '1rem',
+                        border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                        backgroundColor: isSelected ? 'rgba(79, 70, 229, 0.05)' : 'var(--surface)',
+                        borderRadius: 'var(--radius-sm)',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '15px',
-                        transition: 'all 0.15s ease'
+                        gap: '1rem',
+                        transition: 'var(--transition)'
                       }}
                     >
-                      <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: isSelected ? '#3b82f6' : '#f3f4f6', color: isSelected ? 'white' : '#4b5563', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isSelected ? 'var(--primary)' : '#f1f5f9', color: isSelected ? 'white' : 'var(--text-muted)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: '600' }}>
                         {label}
                       </div>
-                      <div style={{ fontSize: '16px', color: '#374151', flex: 1 }}>{val}</div>
+                      <div style={{ flex: 1 }}>{val}</div>
                     </div>
                   );
                 })}
@@ -346,7 +341,7 @@ const StudentActiveTest = ({ testId }) => {
               {answers[q._id || q.id] && (
                 <button 
                   onClick={() => clearSelection(q._id || q.id)}
-                  style={{ background: 'none', border: 'none', color: '#6b7280', textDecoration: 'underline', cursor: 'pointer', fontSize: '14px' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.875rem' }}
                 >
                   Clear Selection
                 </button>
@@ -355,48 +350,48 @@ const StudentActiveTest = ({ testId }) => {
           </div>
 
           {/* Bottom Action Bar */}
-          <div style={{ backgroundColor: 'white', padding: '20px 30px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ backgroundColor: 'var(--surface)', padding: '1rem 2rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
             <button 
               onClick={goToPrevious}
               disabled={currentQIndex === 0}
-              style={{ padding: '12px 24px', backgroundColor: currentQIndex === 0 ? '#f3f4f6' : 'white', color: currentQIndex === 0 ? '#9ca3af' : '#4b5563', border: '1px solid #d1d5db', borderRadius: '8px', fontWeight: 'bold', cursor: currentQIndex === 0 ? 'not-allowed' : 'pointer' }}
+              className="btn btn-secondary"
             >
               Previous
             </button>
 
             <button 
               onClick={toggleReview}
-              style={{ padding: '12px 24px', backgroundColor: reviewStatus[currentQIndex] ? '#fff7ed' : 'white', color: '#ea580c', border: '1px solid #f97316', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+              className="btn"
+              style={{ backgroundColor: reviewStatus[currentQIndex] ? '#fff7ed' : 'var(--surface)', color: '#ea580c', border: '1px solid #f97316' }}
             >
               {reviewStatus[currentQIndex] ? 'Unmark Review' : 'Mark for Review'}
             </button>
             
             <button 
               onClick={currentQIndex === questions.length - 1 ? () => setShowSubmitModal(true) : goToNext}
-              style={{ padding: '12px 24px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+              className="btn btn-primary"
             >
               {currentQIndex === questions.length - 1 ? 'Submit Test' : 'Save & Next'}
             </button>
           </div>
         </div>
 
-        {/* Right Side: Palette Sidebar (25% width on desktop) */}
-        <div style={{ flex: '1 1 300px', maxWidth: '100%', backgroundColor: 'white', borderLeft: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+        {/* Right Side: Palette Sidebar */}
+        <div style={{ flex: '1 1 300px', maxWidth: '100%', backgroundColor: 'var(--surface)', borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
           
-          <div style={{ padding: '20px', borderBottom: '1px solid #e5e7eb' }}>
-            <h3 style={{ margin: '0 0 15px 0', color: '#1f2937', fontSize: '18px' }}>Question Palette</h3>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
+            <h3 className="mb-3">Question Palette</h3>
             
-            {/* Legend */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '12px', color: '#4b5563' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#16a34a' }}></div> Answered ({answeredCount})</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#f97316' }}></div> Review ({reviewCount})</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ef4444' }}></div> Skipped ({notAnsweredCount})</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#9ca3af' }}></div> Not Visited ({notVisitedCount})</div>
+            <div className="grid grid-cols-2 gap-2" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <div className="flex items-center gap-2"><div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10b981' }}></div> Answered ({answeredCount})</div>
+              <div className="flex items-center gap-2"><div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#f97316' }}></div> Review ({reviewCount})</div>
+              <div className="flex items-center gap-2"><div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#ef4444' }}></div> Skipped ({notAnsweredCount})</div>
+              <div className="flex items-center gap-2"><div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#94a3b8' }}></div> Not Visited ({notVisitedCount})</div>
             </div>
           </div>
 
-          <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(45px, 1fr))', gap: '10px' }}>
+          <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(40px, 1fr))', gap: '0.5rem' }}>
               {questions.map((_, i) => (
                 <button
                   key={i}
@@ -406,15 +401,17 @@ const StudentActiveTest = ({ testId }) => {
                     borderRadius: '50%',
                     backgroundColor: getStatusColor(i),
                     color: 'white',
-                    border: currentQIndex === i ? '3px solid #1f2937' : 'none',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
+                    border: 'none',
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     padding: 0,
-                    boxShadow: currentQIndex === i ? '0 0 0 2px white inset' : 'none'
+                    boxShadow: currentQIndex === i ? '0 0 0 3px var(--text-main) inset' : 'none',
+                    opacity: currentQIndex !== i && !visitedStatus[i] ? 0.7 : 1,
+                    transition: 'var(--transition)'
                   }}
                 >
                   {i + 1}
@@ -428,40 +425,38 @@ const StudentActiveTest = ({ testId }) => {
 
       {/* Submit Confirmation Modal */}
       {showSubmitModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
-          <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', maxWidth: '400px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-            <h2 style={{ margin: '0 0 20px 0', color: '#111827' }}>Submit Exam?</h2>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2 className="mb-3">Submit Exam?</h2>
             
-            <div style={{ backgroundColor: '#f3f4f6', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: '#4b5563' }}>Total Questions:</span>
-                <span style={{ fontWeight: 'bold', color: '#111827' }}>{total}</span>
+            <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem' }}>
+              <div className="flex justify-between mb-2">
+                <span className="text-muted">Total Questions:</span>
+                <span style={{ fontWeight: '600' }}>{total}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: '#16a34a' }}>Answered:</span>
-                <span style={{ fontWeight: 'bold', color: '#16a34a' }}>{answeredCount}</span>
+              <div className="flex justify-between mb-2">
+                <span style={{ color: '#059669' }}>Answered:</span>
+                <span style={{ fontWeight: '600', color: '#059669' }}>{answeredCount}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div className="flex justify-between mb-2">
                 <span style={{ color: '#ea580c' }}>Marked for Review:</span>
-                <span style={{ fontWeight: 'bold', color: '#ea580c' }}>{reviewCount}</span>
+                <span style={{ fontWeight: '600', color: '#ea580c' }}>{reviewCount}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#ef4444' }}>Unanswered / Skipped:</span>
-                <span style={{ fontWeight: 'bold', color: '#ef4444' }}>{notAnsweredCount + notVisitedCount}</span>
+              <div className="flex justify-between">
+                <span style={{ color: '#dc2626' }}>Unanswered / Skipped:</span>
+                <span style={{ fontWeight: '600', color: '#dc2626' }}>{notAnsweredCount + notVisitedCount}</span>
               </div>
             </div>
 
-            <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '25px' }}>
+            <p className="text-muted mb-4" style={{ fontSize: '0.875rem', lineHeight: '1.5' }}>
               Are you sure you want to submit? You will not be able to change your answers after submission.
             </p>
 
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <button onClick={() => setShowSubmitModal(false)} style={{ flex: 1, padding: '12px', backgroundColor: 'white', border: '1px solid #d1d5db', borderRadius: '8px', color: '#374151', fontWeight: 'bold', cursor: 'pointer' }}>
+            <div className="flex gap-3">
+              <button onClick={() => setShowSubmitModal(false)} className="btn btn-secondary w-full">
                 Go Back
               </button>
-              <button onClick={() => {
-                submitTest(false);
-              }} style={{ flex: 1, padding: '12px', backgroundColor: '#9333ea', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+              <button onClick={() => submitTest(false)} className="btn w-full" style={{ backgroundColor: '#9333ea', color: 'white' }}>
                 Yes, Submit
               </button>
             </div>

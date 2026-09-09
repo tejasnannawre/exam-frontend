@@ -17,10 +17,10 @@ const QuestionBank = () => {
     message: '',
     onConfirm: () => {},
     confirmText: 'Confirm',
-    confirmColor: '#2563eb'
+    confirmColor: 'primary'
   });
 
-  const openConfirm = (title, message, onConfirm, confirmText = 'Confirm', confirmColor = '#2563eb') => {
+  const openConfirm = (title, message, onConfirm, confirmText = 'Confirm', confirmColor = 'primary') => {
     setConfirmConfig({
       isOpen: true,
       title,
@@ -38,7 +38,6 @@ const QuestionBank = () => {
     setConfirmConfig(prev => ({ ...prev, isOpen: false }));
   };
 
-  // Fetch initial units
   useEffect(() => {
     const fetchUnits = async () => {
       try {
@@ -104,93 +103,81 @@ const QuestionBank = () => {
         }
       },
       "Delete",
-      "#ef4444"
+      "danger"
     );
   };
 
   return (
-    <div style={{ marginTop: '30px', backgroundColor: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', border: '1px solid #f3f4f6' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-        <h3 style={{ margin: 0, color: '#111827', fontSize: '1.25rem', fontWeight: '600' }}>Question Bank Viewer</h3>
-        <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: '500' }}>
+    <div className="card animate-fade-in">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="mb-0">Question Bank Viewer</h3>
+        <span style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '4px 12px', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: '600' }}>
           {questions.length} Questions
         </span>
       </div>
       
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '25px', backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '13px', fontWeight: '600', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by Unit</label>
-          <select 
-            value={selectedUnit} 
-            onChange={handleUnitChange}
-            style={{ padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: 'white', color: '#1f2937', fontSize: '14px', outline: 'none', cursor: 'pointer', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}
-          >
-            <option value="" style={{ color: '#1f2937' }}>All Units</option>
-            {availableUnits.map(unit => (
-              <option key={unit} value={unit} style={{ color: '#1f2937' }}>{unit}</option>
-            ))}
+      <div className="grid grid-cols-2 gap-3 mb-4" style={{ backgroundColor: '#f1f5f9', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+        <div className="form-group mb-0">
+          <label className="form-label" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by Unit</label>
+          <select className="form-control" value={selectedUnit} onChange={handleUnitChange}>
+            <option value="">All Units</option>
+            {availableUnits.map(unit => <option key={unit} value={unit}>{unit}</option>)}
           </select>
         </div>
         
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '13px', fontWeight: '600', color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by Subtopic</label>
-          <select 
-            value={selectedSubtopic} 
-            onChange={e => setSelectedSubtopic(e.target.value)}
-            disabled={!selectedUnit}
-            style={{ padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', backgroundColor: !selectedUnit ? '#f3f4f6' : 'white', color: '#1f2937', fontSize: '14px', outline: 'none', cursor: !selectedUnit ? 'not-allowed' : 'pointer', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}
-          >
-            <option value="" style={{ color: '#1f2937' }}>All Subtopics</option>
-            {(subtopicsCache[selectedUnit] || []).map(sub => (
-              <option key={sub} value={sub} style={{ color: '#1f2937' }}>{sub}</option>
-            ))}
+        <div className="form-group mb-0">
+          <label className="form-label" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by Subtopic</label>
+          <select className="form-control" value={selectedSubtopic} onChange={e => setSelectedSubtopic(e.target.value)} disabled={!selectedUnit}>
+            <option value="">All Subtopics</option>
+            {(subtopicsCache[selectedUnit] || []).map(sub => <option key={sub} value={sub}>{sub}</option>)}
           </select>
         </div>
       </div>
 
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>Loading questions...</div>
+        <div className="text-center text-muted" style={{ padding: '3rem' }}>Loading questions...</div>
       ) : questions.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px dashed #d1d5db', color: '#6b7280' }}>
+        <div className="text-center text-muted" style={{ padding: '3rem', backgroundColor: '#f1f5f9', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border)' }}>
           No questions found for the selected filters.
         </div>
       ) : (
-        <div style={{ overflowX: 'auto', maxHeight: '600px', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', fontSize: '14px', minWidth: '900px' }}>
-            <thead style={{ backgroundColor: '#f9fafb', position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
+        <div style={{ overflowX: 'auto', maxHeight: '600px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+          <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '900px' }}>
+            <thead style={{ backgroundColor: '#f1f5f9', position: 'sticky', top: 0, zIndex: 10 }}>
               <tr>
-                <th style={{ padding: '16px 20px', textAlign: 'left', color: '#374151', fontWeight: '600', letterSpacing: '0.025em' }}>Question Details</th>
-                <th style={{ padding: '16px 20px', textAlign: 'left', color: '#374151', fontWeight: '600', letterSpacing: '0.025em', width: '300px' }}>Options</th>
-                <th style={{ padding: '16px 20px', textAlign: 'left', color: '#374151', fontWeight: '600', letterSpacing: '0.025em', width: '150px' }}>Correct Answer</th>
-                <th style={{ padding: '16px 20px', textAlign: 'center', color: '#374151', fontWeight: '600', letterSpacing: '0.025em', width: '100px' }}>Actions</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Question Details</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '300px' }}>Options</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '150px' }}>Correct Answer</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '100px', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
-            <tbody style={{ backgroundColor: 'white' }}>
+            <tbody>
               {questions.map((q, idx) => (
-                <tr key={q._id || idx} style={{ borderBottom: '1px solid #e5e7eb', backgroundColor: idx % 2 === 0 ? 'white' : '#f9fafb', transition: 'background-color 0.15s ease' }}>
-                  <td style={{ padding: '20px', verticalAlign: 'top', color: '#1f2937' }}>
-                    <div style={{ display: 'inline-block', padding: '2px 8px', backgroundColor: '#e5e7eb', color: '#374151', borderRadius: '4px', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', marginBottom: '10px' }}>
+                <tr key={q._id || idx} style={{ borderBottom: '1px solid var(--border)', backgroundColor: idx % 2 === 0 ? 'var(--surface)' : '#f8fafc', transition: 'var(--transition)' }}>
+                  <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
+                    <div style={{ display: 'inline-block', padding: '2px 8px', backgroundColor: '#e2e8f0', color: 'var(--text-muted)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                       {q.Unit} &bull; {q.Subtopic}
                     </div>
-                    <div style={{ lineHeight: '1.5', fontWeight: '500' }}>{q.Question}</div>
+                    <div style={{ lineHeight: '1.5', fontWeight: '500', color: 'var(--text-main)' }}>{q.Question}</div>
                   </td>
-                  <td style={{ padding: '20px', verticalAlign: 'top' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#4b5563' }}>
-                      <div style={{ display: 'flex', gap: '10px' }}><span style={{ fontWeight: '600', color: '#6b7280', width: '15px' }}>A</span> <span>{q.Option_A}</span></div>
-                      <div style={{ display: 'flex', gap: '10px' }}><span style={{ fontWeight: '600', color: '#6b7280', width: '15px' }}>B</span> <span>{q.Option_B}</span></div>
-                      <div style={{ display: 'flex', gap: '10px' }}><span style={{ fontWeight: '600', color: '#6b7280', width: '15px' }}>C</span> <span>{q.Option_C}</span></div>
-                      <div style={{ display: 'flex', gap: '10px' }}><span style={{ fontWeight: '600', color: '#6b7280', width: '15px' }}>D</span> <span>{q.Option_D}</span></div>
+                  <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
+                    <div className="flex-col gap-2 text-muted">
+                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>A</span> <span>{q.Option_A}</span></div>
+                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>B</span> <span>{q.Option_B}</span></div>
+                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>C</span> <span>{q.Option_C}</span></div>
+                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>D</span> <span>{q.Option_D}</span></div>
                     </div>
                   </td>
-                  <td style={{ padding: '20px', verticalAlign: 'top' }}>
-                    <span style={{ display: 'inline-block', padding: '6px 12px', backgroundColor: '#d1fae5', color: '#065f46', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px' }}>
+                  <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
+                    <span style={{ display: 'inline-block', padding: '6px 12px', backgroundColor: '#d1fae5', color: '#059669', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.875rem' }}>
                       {q.Correct_Answer}
                     </span>
                   </td>
-                  <td style={{ padding: '20px', verticalAlign: 'top', textAlign: 'center' }}>
+                  <td style={{ padding: '1.5rem', verticalAlign: 'top', textAlign: 'center' }}>
                     <button 
                       onClick={() => handleDelete(q._id)}
-                      style={{ padding: '6px 12px', backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                      className="btn"
+                      style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', backgroundColor: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)' }}
                     >
                       Delete
                     </button>

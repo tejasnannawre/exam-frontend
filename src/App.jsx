@@ -25,8 +25,8 @@ function App() {
 
   // Default Admin Dashboard
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f3f4f6' }}>
-      <main style={{ flex: 1 }}>
+    <div className="app-container">
+      <main className="flex-col" style={{ flex: 1 }}>
         <ProfessorDashboard />
       </main>
     </div>

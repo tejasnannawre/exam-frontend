@@ -6,17 +6,21 @@ const TestCreator = () => {
   const [testName, setTestName] = useState('');
   const [division, setDivision] = useState('');
   const [randomized, setRandomized] = useState(true);
-  const [topics, setTopics] = useState([{ Unit: '', Subtopic: '', QuestionCount: 1 }]);
   
   const [availableUnits, setAvailableUnits] = useState([]);
-  const [subtopicsCache, setSubtopicsCache] = useState({}); // { "Unit1": ["Sub1", "Sub2"] }
+  const [subtopicsCache, setSubtopicsCache] = useState({});
+  
+  const [selectedUnit, setSelectedUnit] = useState('');
+  const [selectedSubtopic, setSelectedSubtopic] = useState('');
+  
+  const [availableQuestions, setAvailableQuestions] = useState([]);
+  const [selectedQuestions, setSelectedQuestions] = useState([]); // array of IDs
+  
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
-  
-  const [testResult, setTestResult] = useState(null); // { TestID, PIN }
+  const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
-    // Fetch available units
     const fetchUnits = async () => {
       try {
         const response = await axios.get('/api/exam/units');
@@ -30,40 +34,50 @@ const TestCreator = () => {
 
   const fetchSubtopicsForUnit = async (unit) => {
     if (!unit || subtopicsCache[unit]) return;
-
     try {
       const response = await axios.get(`/api/exam/subtopics/${encodeURIComponent(unit)}`);
-      setSubtopicsCache(prev => ({
-        ...prev,
-        [unit]: response.data.subtopics || []
-      }));
+      setSubtopicsCache(prev => ({ ...prev, [unit]: response.data.subtopics || [] }));
     } catch (error) {
       console.error(`Error fetching subtopics for ${unit}:`, error);
     }
   };
 
-  const handleTopicChange = async (index, field, value) => {
-    const newTopics = [...topics];
-    newTopics[index][field] = value;
-    
-    // Reset subtopic if unit changes and fetch new subtopics
-    if (field === 'Unit') {
-      newTopics[index]['Subtopic'] = '';
-      if (value) {
-        fetchSubtopicsForUnit(value);
-      }
+  const handleUnitChange = (e) => {
+    const unit = e.target.value;
+    setSelectedUnit(unit);
+    setSelectedSubtopic('');
+    setAvailableQuestions([]);
+    if (unit) {
+      fetchSubtopicsForUnit(unit);
     }
+  };
+
+  const handleSubtopicChange = async (e) => {
+    const subtopic = e.target.value;
+    setSelectedSubtopic(subtopic);
     
-    setTopics(newTopics);
+    if (selectedUnit && subtopic) {
+      try {
+        const params = new URLSearchParams();
+        params.append('unit', selectedUnit);
+        params.append('subtopic', subtopic);
+        
+        const response = await axios.get(`/api/professor/questions?${params.toString()}`);
+        setAvailableQuestions(response.data.questions || []);
+      } catch (error) {
+        console.error("Error fetching questions for filter:", error);
+      }
+    } else {
+      setAvailableQuestions([]);
+    }
   };
 
-  const addTopic = () => {
-    setTopics([...topics, { Unit: '', Subtopic: '', QuestionCount: 1 }]);
-  };
-
-  const removeTopic = (index) => {
-    const newTopics = topics.filter((_, i) => i !== index);
-    setTopics(newTopics);
+  const toggleQuestionSelection = (questionId) => {
+    if (selectedQuestions.includes(questionId)) {
+      setSelectedQuestions(selectedQuestions.filter(id => id !== questionId));
+    } else {
+      setSelectedQuestions([...selectedQuestions, questionId]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -72,26 +86,23 @@ const TestCreator = () => {
     setMessage({ text: '', type: '' });
     setTestResult(null);
 
-    // Basic validation
     if (!testName || !division) {
       setMessage({ text: 'Please fill in Test Name and Division', type: 'error' });
       setLoading(false);
       return;
     }
     
-    for (const t of topics) {
-      if (!t.Unit || !t.Subtopic || t.QuestionCount <= 0) {
-        setMessage({ text: 'Please fill out all topic selections correctly.', type: 'error' });
-        setLoading(false);
-        return;
-      }
+    if (selectedQuestions.length === 0) {
+      setMessage({ text: 'Please select at least one question for the test.', type: 'error' });
+      setLoading(false);
+      return;
     }
 
     try {
       const payload = {
         TestName: testName,
         Division: division,
-        Topics: topics,
+        QuestionIDs: selectedQuestions,
         Randomized: randomized
       };
 
@@ -100,207 +111,143 @@ const TestCreator = () => {
       setMessage({ text: 'Test generated successfully!', type: 'success' });
     } catch (error) {
       console.error(error);
-      setMessage({ 
-        text: error.response?.data?.detail || 'An error occurred while creating the test.', 
-        type: 'error' 
-      });
+      let errorMsg = 'An error occurred while creating the test.';
+      if (error.response?.data?.detail) {
+        if (typeof error.response.data.detail === 'string') {
+          errorMsg = error.response.data.detail;
+        } else if (Array.isArray(error.response.data.detail)) {
+          errorMsg = 'Backend Validation Error: Please deploy your latest backend code. The server expects the old format.';
+        }
+      }
+      setMessage({ text: errorMsg, type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  // The student test URL would be the current domain + /test/TestID
   const testUrl = testResult ? `${window.location.origin}/test/${testResult.TestID}` : '';
 
   return (
-    <div style={{ marginTop: '30px', backgroundColor: '#f9fafb', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-      <h3 style={{ marginTop: 0, color: '#4b5563', marginBottom: '20px' }}>Create New Test</h3>
+    <div className="card animate-fade-in">
+      <h3 className="mb-3">Create Custom Test</h3>
       
       {!testResult ? (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <form onSubmit={handleSubmit} className="flex-col gap-4">
           
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontWeight: 'bold', fontSize: '14px', color: '#374151' }}>Test Name</label>
-              <input 
-                type="text" 
-                value={testName}
-                onChange={e => setTestName(e.target.value)}
-                placeholder="e.g. Midterm Exam"
-                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: 'white', color: '#1f2937', outline: 'none' }}
-                required
-              />
+          {/* Test Metadata */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="form-group mb-0">
+              <label className="form-label">Test Name</label>
+              <input type="text" className="form-control" value={testName} onChange={e => setTestName(e.target.value)} placeholder="e.g. Midterm Exam" required />
             </div>
-            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={{ fontWeight: 'bold', fontSize: '14px', color: '#374151' }}>Division / Class</label>
-              <input 
-                type="text" 
-                value={division}
-                onChange={e => setDivision(e.target.value)}
-                placeholder="e.g. FYMCA Div A"
-                style={{ padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', backgroundColor: 'white', color: '#1f2937', outline: 'none' }}
-                required
-              />
+            <div className="form-group mb-0">
+              <label className="form-label">Division / Class</label>
+              <input type="text" className="form-control" value={division} onChange={e => setDivision(e.target.value)} placeholder="e.g. FYMCA Div A" required />
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '15px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#4b5563' }}>Question Selection</h4>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', marginTop: '1rem' }}>
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="mb-0">Question Selection</h4>
+              <div style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', padding: '6px 12px', borderRadius: '9999px', fontSize: '14px', fontWeight: '600' }}>
+                {selectedQuestions.length} Selected
+              </div>
+            </div>
             
-            {topics.map((topic, index) => (
-              <div key={index} style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'flex-end', marginBottom: '15px', backgroundColor: 'white', padding: '15px', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
-                <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <label style={{ fontSize: '13px', color: '#6b7280' }}>Unit</label>
-                  <select 
-                    value={topic.Unit} 
-                    onChange={e => handleTopicChange(index, 'Unit', e.target.value)}
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #d1d5db', backgroundColor: 'white', color: '#1f2937', outline: 'none' }}
-                    required
-                  >
-                    <option value="">Select Unit</option>
-                    {availableUnits.map(unit => (
-                      <option key={unit} value={unit}>{unit}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div style={{ flex: '1 1 150px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <label style={{ fontSize: '13px', color: '#6b7280' }}>Subtopic</label>
-                  <select 
-                    value={topic.Subtopic} 
-                    onChange={e => handleTopicChange(index, 'Subtopic', e.target.value)}
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #d1d5db', backgroundColor: 'white', color: '#1f2937', outline: 'none' }}
-                    disabled={!topic.Unit}
-                    required
-                  >
-                    <option value="">Select Subtopic</option>
-                    {(subtopicsCache[topic.Unit] || []).map(sub => (
-                      <option key={sub} value={sub}>{sub}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div style={{ flex: '1 1 80px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <label style={{ fontSize: '13px', color: '#6b7280' }}>No. of Qs</label>
-                  <input 
-                    type="number" 
-                    min="1"
-                    value={topic.QuestionCount}
-                    onChange={e => handleTopicChange(index, 'QuestionCount', parseInt(e.target.value) || 0)}
-                    style={{ padding: '8px', borderRadius: '4px', border: '1px solid #d1d5db', backgroundColor: 'white', color: '#1f2937', outline: 'none' }}
-                    required
-                  />
-                </div>
-                
-                {topics.length > 1 && (
-                  <button 
-                    type="button"
-                    onClick={() => removeTopic(index)}
-                    style={{ padding: '8px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                  >
-                    X
-                  </button>
+            {/* Filter Controls */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="form-group mb-0">
+                <label className="form-label">Filter by Unit</label>
+                <select className="form-control" value={selectedUnit} onChange={handleUnitChange}>
+                  <option value="">Select Unit</option>
+                  {availableUnits.map(unit => <option key={unit} value={unit}>{unit}</option>)}
+                </select>
+              </div>
+              <div className="form-group mb-0">
+                <label className="form-label">Filter by Subtopic</label>
+                <select className="form-control" value={selectedSubtopic} onChange={handleSubtopicChange} disabled={!selectedUnit}>
+                  <option value="">Select Subtopic</option>
+                  {(subtopicsCache[selectedUnit] || []).map(sub => <option key={sub} value={sub}>{sub}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Questions List */}
+            {selectedSubtopic && (
+              <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--surface)' }}>
+                {availableQuestions.length === 0 ? (
+                  <div className="text-center text-muted" style={{ padding: '2rem' }}>No questions found for this subtopic.</div>
+                ) : (
+                  availableQuestions.map((q, idx) => {
+                    const isSelected = selectedQuestions.includes(q._id);
+                    return (
+                      <div key={q._id} className="flex justify-between" style={{ padding: '1rem', borderBottom: idx !== availableQuestions.length - 1 ? '1px solid var(--border)' : 'none', backgroundColor: isSelected ? '#f0fdf4' : 'var(--surface)', transition: 'var(--transition)' }}>
+                        <div style={{ flex: 1, paddingRight: '1rem' }}>
+                          <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.75rem', color: 'var(--text-main)' }}>{q.Question}</div>
+                          <div className="grid grid-cols-2 gap-2 text-muted" style={{ fontSize: '0.875rem' }}>
+                            <div><strong style={{color: 'var(--text-main)'}}>A:</strong> {q.Option_A}</div>
+                            <div><strong style={{color: 'var(--text-main)'}}>B:</strong> {q.Option_B}</div>
+                            <div><strong style={{color: 'var(--text-main)'}}>C:</strong> {q.Option_C}</div>
+                            <div><strong style={{color: 'var(--text-main)'}}>D:</strong> {q.Option_D}</div>
+                          </div>
+                          <div className="mt-2" style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: '600' }}>
+                            Correct Answer: {q.Correct_Answer}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleQuestionSelection(q._id)}
+                          className={`btn ${isSelected ? 'btn-danger' : 'btn-primary'}`}
+                          style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', minWidth: '90px', alignSelf: 'flex-start' }}
+                        >
+                          {isSelected ? 'Remove' : 'Add'}
+                        </button>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-            ))}
-            
-            <button 
-              type="button" 
-              onClick={addTopic}
-              style={{ padding: '8px 15px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
-            >
-              + Add Another Topic
-            </button>
+            )}
           </div>
 
-          <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h4 style={{ margin: '0', color: '#4b5563' }}>Settings</h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                <input 
-                  type="radio" 
-                  name="order" 
-                  checked={randomized} 
-                  onChange={() => setRandomized(true)} 
-                />
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', marginTop: '1rem' }}>
+            <h4 className="mb-2">Settings</h4>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+                <input type="radio" name="order" checked={randomized} onChange={() => setRandomized(true)} />
                 Randomized Order
               </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                <input 
-                  type="radio" 
-                  name="order" 
-                  checked={!randomized} 
-                  onChange={() => setRandomized(false)} 
-                />
+              <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+                <input type="radio" name="order" checked={!randomized} onChange={() => setRandomized(false)} />
                 Sequential Order
               </label>
             </div>
           </div>
 
           {message.text && (
-            <div style={{ 
-              padding: '12px', 
-              borderRadius: '6px',
-              backgroundColor: message.type === 'success' ? '#d1fae5' : '#fee2e2',
-              color: message.type === 'success' ? '#065f46' : '#991b1b',
-              border: `1px solid ${message.type === 'success' ? '#a7f3d0' : '#fecaca'}`
-            }}>
+            <div className={`alert mt-2 ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
               {message.text}
             </div>
           )}
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{ 
-              padding: '15px', 
-              backgroundColor: '#2563eb', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '6px', 
-              cursor: loading ? 'not-allowed' : 'pointer', 
-              fontSize: '16px', 
-              fontWeight: 'bold',
-              marginTop: '10px'
-            }}
-          >
-            {loading ? 'Generating...' : 'Generate Test & QR Code'}
+          <button type="submit" disabled={loading} className="btn btn-primary mt-3 w-full" style={{ padding: '1rem', fontSize: '1.1rem' }}>
+            {loading ? 'Generating...' : `Generate Test with ${selectedQuestions.length} Questions`}
           </button>
         </form>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', padding: '30px', backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e5e7eb', textAlign: 'center' }}>
-          <h2 style={{ color: '#10b981', margin: 0 }}>Test Generated Successfully!</h2>
-          
-          <div style={{ padding: '20px', backgroundColor: '#f3f4f6', borderRadius: '8px', width: '100%', maxWidth: '400px' }}>
-            <h1 style={{ fontSize: '48px', margin: '0 0 10px 0', color: '#1f2937', letterSpacing: '5px' }}>{testResult.PIN}</h1>
-            <p style={{ color: '#6b7280', margin: 0, fontWeight: 'bold', textTransform: 'uppercase' }}>Test PIN</p>
+        <div className="flex-col items-center gap-4 text-center" style={{ padding: '2rem 1rem' }}>
+          <h2 style={{ color: 'var(--success)', margin: 0 }}>Test Generated Successfully!</h2>
+          <div style={{ padding: '2rem', backgroundColor: '#f1f5f9', borderRadius: 'var(--radius-md)', width: '100%', maxWidth: '400px' }}>
+            <h1 style={{ fontSize: '3rem', margin: '0 0 0.5rem 0', letterSpacing: '0.2em' }}>{testResult.PIN}</h1>
+            <p className="text-muted" style={{ margin: 0, fontWeight: '600', textTransform: 'uppercase' }}>Test PIN</p>
           </div>
-          
-          <div style={{ padding: '20px', border: '2px dashed #d1d5db', borderRadius: '8px', backgroundColor: 'white' }}>
+          <div style={{ padding: '1.5rem', border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--surface)' }}>
             <QRCodeSVG value={testUrl} size={250} level="H" />
-            <p style={{ marginTop: '15px', color: '#4b5563', fontSize: '14px' }}>Scan with mobile device to join</p>
+            <p className="text-muted mt-2 mb-0" style={{ fontSize: '0.875rem' }}>Scan with mobile device to join</p>
           </div>
-          
-          <div style={{ display: 'flex', gap: '15px', width: '100%', maxWidth: '400px' }}>
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(testUrl);
-                alert("URL Copied to clipboard!");
-              }}
-              style={{ flex: 1, padding: '10px', backgroundColor: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              Copy Link
-            </button>
-            <button 
-              onClick={() => {
-                setTestResult(null);
-                setTestName('');
-                setDivision('');
-              }}
-              style={{ flex: 1, padding: '10px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              Create Another
-            </button>
+          <div className="grid grid-cols-2 gap-3 w-full" style={{ maxWidth: '400px' }}>
+            <button onClick={() => { navigator.clipboard.writeText(testUrl); alert("URL Copied to clipboard!"); }} className="btn btn-secondary w-full">Copy Link</button>
+            <button onClick={() => { setTestResult(null); setTestName(''); setDivision(''); setSelectedQuestions([]); }} className="btn btn-primary w-full">Create Another</button>
           </div>
         </div>
       )}

@@ -14,10 +14,10 @@ const TestLibrary = () => {
     message: '',
     onConfirm: () => {},
     confirmText: 'Confirm',
-    confirmColor: '#2563eb'
+    confirmColor: '#2563eb' // Not heavily used now since we have classes
   });
 
-  const openConfirm = (title, message, onConfirm, confirmText = 'Confirm', confirmColor = '#2563eb') => {
+  const openConfirm = (title, message, onConfirm, confirmText = 'Confirm', confirmColor = 'primary') => {
     setConfirmConfig({
       isOpen: true,
       title,
@@ -27,7 +27,7 @@ const TestLibrary = () => {
         closeConfirm();
       },
       confirmText,
-      confirmColor
+      confirmColor // Map to 'primary', 'success', 'danger'
     });
   };
 
@@ -59,7 +59,7 @@ const TestLibrary = () => {
         "Are you sure you want to publish this test? Students will be able to access it.",
         () => performUpdateStatus(testId, newStatus, pin),
         "Publish",
-        "#10b981"
+        "success"
       );
       return;
     }
@@ -70,7 +70,7 @@ const TestLibrary = () => {
         "Are you sure you want to end this exam? Students will no longer be able to submit.",
         () => performUpdateStatus(testId, newStatus, pin),
         "End Exam",
-        "#ef4444"
+        "danger"
       );
       return;
     }
@@ -109,90 +109,93 @@ const TestLibrary = () => {
         }
       },
       "Delete",
-      "#ef4444"
+      "danger"
     );
   };
 
   return (
-    <div style={{ marginTop: '20px' }}>
-      <h3 style={{ color: '#4b5563', marginBottom: '20px' }}>Test Library</h3>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="animate-fade-in card">
+      <h3 className="mb-3">Test Library</h3>
+      {error && <div className="alert alert-error">{error}</div>}
       
       {loading ? (
-        <p>Loading tests...</p>
+        <p className="text-muted text-center" style={{ padding: '2rem' }}>Loading tests...</p>
       ) : tests.length === 0 ? (
-        <p>No tests created yet.</p>
+        <p className="text-muted text-center" style={{ padding: '2rem' }}>No tests created yet.</p>
       ) : (
-        <div style={{ overflowX: 'auto', width: '100%', display: 'block' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <thead style={{ backgroundColor: '#f3f4f6', textAlign: 'left' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '600px' }}>
+            <thead style={{ backgroundColor: '#f1f5f9' }}>
               <tr>
-                <th style={{ padding: '12px 15px', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Test Name</th>
-                <th style={{ padding: '12px 15px', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Division</th>
-                <th style={{ padding: '12px 15px', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Date Created</th>
-                <th style={{ padding: '12px 15px', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Status</th>
-                <th style={{ padding: '12px 15px', color: '#374151', borderBottom: '1px solid #e5e7eb' }}>Actions</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Test Name</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Division</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Date Created</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Status</th>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {tests.map(test => (
-                <tr key={test._id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: '12px 15px', color: '#111827' }}>{test.TestName}</td>
-                  <td style={{ padding: '12px 15px', color: '#6b7280' }}>{test.Division}</td>
-                  <td style={{ padding: '12px 15px', color: '#6b7280' }}>
+                <tr key={test._id} style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)' }}>
+                  <td style={{ padding: '1rem', fontWeight: '500' }}>{test.TestName}</td>
+                  <td className="text-muted" style={{ padding: '1rem' }}>{test.Division}</td>
+                  <td className="text-muted" style={{ padding: '1rem' }}>
                     {test.CreatedAt ? new Date(test.CreatedAt).toLocaleDateString() : 'N/A'}
                   </td>
-                  <td style={{ padding: '12px 15px' }}>
+                  <td style={{ padding: '1rem' }}>
                     <span style={{
-                      padding: '4px 8px',
+                      padding: '4px 10px',
                       borderRadius: '9999px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      backgroundColor: test.Status === 'active' ? '#d1fae5' : test.Status === 'completed' ? '#f3f4f6' : '#fef3c7',
-                      color: test.Status === 'active' ? '#065f46' : test.Status === 'completed' ? '#374151' : '#92400e'
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      backgroundColor: test.Status === 'active' ? '#d1fae5' : test.Status === 'completed' ? '#f1f5f9' : '#fef3c7',
+                      color: test.Status === 'active' ? '#059669' : test.Status === 'completed' ? '#475569' : '#b45309'
                     }}>
                       {(test.Status || 'draft').toUpperCase()}
                     </span>
                   </td>
-                  <td style={{ padding: '12px 15px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {(test.Status === 'draft' || !test.Status) && (
-                      <button 
-                        onClick={() => updateStatus(test._id, 'active', test.PIN)}
-                        style={{ padding: '6px 12px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
-                      >
-                        Publish to Class
-                      </button>
-                    )}
-                    {test.Status === 'active' && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                  <td style={{ padding: '1rem' }}>
+                    <div className="flex gap-2 items-center flex-wrap">
+                      {(test.Status === 'draft' || !test.Status) && (
                         <button 
-                          onClick={() => setActiveModal({ testID: test._id, pin: test.PIN })}
-                          style={{ padding: '6px 12px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                          onClick={() => updateStatus(test._id, 'active', test.PIN)}
+                          className="btn btn-success" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                         >
-                          Show QR
+                          Publish to Class
                         </button>
+                      )}
+                      {test.Status === 'active' && (
+                        <>
+                          <button 
+                            onClick={() => setActiveModal({ testID: test._id, pin: test.PIN })}
+                            className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                          >
+                            Show QR
+                          </button>
+                          <button 
+                            onClick={() => updateStatus(test._id, 'completed')}
+                            className="btn btn-danger" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                          >
+                            End Exam
+                          </button>
+                        </>
+                      )}
+                      {test.Status === 'completed' && (
                         <button 
-                          onClick={() => updateStatus(test._id, 'completed')}
-                          style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                          onClick={() => handleDownload(test._id)}
+                          className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
                         >
-                          End Exam
+                          Download Results
                         </button>
-                      </div>
-                    )}
-                    {test.Status === 'completed' && (
+                      )}
                       <button 
-                        onClick={() => handleDownload(test._id)}
-                        style={{ padding: '6px 12px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' }}
+                        onClick={() => handleDelete(test._id)}
+                        className="btn" 
+                        style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', backgroundColor: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)' }}
                       >
-                        Download Results
+                        Delete
                       </button>
-                    )}
-                    <button 
-                      onClick={() => handleDelete(test._id)}
-                      style={{ padding: '6px 12px', backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
-                    >
-                      Delete
-                    </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -203,28 +206,22 @@ const TestLibrary = () => {
 
       {/* QR Code Modal */}
       {activeModal && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', 
-          justifyContent: 'center', alignItems: 'center', zIndex: 50
-        }}>
-          <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
-            <h2 style={{ color: '#10b981', marginTop: 0 }}>Exam is Live!</h2>
-            <div style={{ padding: '20px', backgroundColor: '#f3f4f6', borderRadius: '8px', margin: '20px 0' }}>
-              <h1 style={{ fontSize: '48px', margin: '0 0 10px 0', color: '#1f2937', letterSpacing: '5px' }}>{activeModal.pin}</h1>
-              <p style={{ color: '#6b7280', margin: 0, fontWeight: 'bold', textTransform: 'uppercase' }}>Test PIN</p>
+        <div className="modal-overlay">
+          <div className="modal-content text-center">
+            <h2 className="mb-0" style={{ color: 'var(--success)' }}>Exam is Live!</h2>
+            <div style={{ padding: '1.5rem', backgroundColor: '#f1f5f9', borderRadius: 'var(--radius-md)', margin: '1.5rem 0' }}>
+              <h1 style={{ fontSize: '3rem', margin: '0 0 0.5rem 0', letterSpacing: '0.2em' }}>{activeModal.pin}</h1>
+              <p className="text-muted" style={{ margin: 0, fontWeight: '600', textTransform: 'uppercase' }}>Test PIN</p>
             </div>
-            <div style={{ padding: '20px', border: '2px dashed #d1d5db', borderRadius: '8px', marginBottom: '20px', display: 'inline-block' }}>
+            <div style={{ padding: '1rem', border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', display: 'inline-block', marginBottom: '1.5rem', backgroundColor: 'white' }}>
               <QRCodeSVG value={`${window.location.origin}/test/${activeModal.testID}`} size={200} level="H" />
             </div>
-            <div>
-              <button 
-                onClick={() => setActiveModal(null)}
-                style={{ padding: '10px 20px', backgroundColor: '#e5e7eb', color: '#374151', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}
-              >
-                Close
-              </button>
-            </div>
+            <button 
+              onClick={() => setActiveModal(null)}
+              className="btn btn-secondary w-full"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
