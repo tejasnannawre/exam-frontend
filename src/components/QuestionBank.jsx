@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ConfirmModal from './ConfirmModal';
 
 const QuestionBank = () => {
   const [questions, setQuestions] = useState([]);
@@ -9,6 +10,33 @@ const QuestionBank = () => {
   
   const [selectedUnit, setSelectedUnit] = useState('');
   const [selectedSubtopic, setSelectedSubtopic] = useState('');
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    confirmColor: '#2563eb'
+  });
+
+  const openConfirm = (title, message, onConfirm, confirmText = 'Confirm', confirmColor = '#2563eb') => {
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        closeConfirm();
+      },
+      confirmText,
+      confirmColor
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   // Fetch initial units
   useEffect(() => {
@@ -62,16 +90,22 @@ const QuestionBank = () => {
     fetchQuestions();
   }, [selectedUnit, selectedSubtopic]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this question?")) {
-      try {
-        await axios.delete(`/api/professor/questions/${id}`);
-        setQuestions(prev => prev.filter(q => q._id !== id));
-      } catch (error) {
-        console.error("Error deleting question:", error);
-        alert("Failed to delete question.");
-      }
-    }
+  const handleDelete = (id) => {
+    openConfirm(
+      "Delete Question",
+      "Are you sure you want to delete this question?",
+      async () => {
+        try {
+          await axios.delete(`/api/professor/questions/${id}`);
+          setQuestions(prev => prev.filter(q => q._id !== id));
+        } catch (error) {
+          console.error("Error deleting question:", error);
+          alert("Failed to delete question.");
+        }
+      },
+      "Delete",
+      "#ef4444"
+    );
   };
 
   return (
@@ -167,6 +201,15 @@ const QuestionBank = () => {
           </table>
         </div>
       )}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={closeConfirm}
+        confirmText={confirmConfig.confirmText}
+        confirmColor={confirmConfig.confirmColor}
+      />
     </div>
   );
 };

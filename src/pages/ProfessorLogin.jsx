@@ -8,6 +8,7 @@ const ProfessorLogin = ({ onLogin }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username === 'admin' && password === 'admin') {
+      localStorage.setItem('username', username);
       onLogin();
     } else {
       setError('Invalid username or password. Try admin / admin');

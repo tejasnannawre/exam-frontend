@@ -1,12 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
+import ConfirmModal from './ConfirmModal';
 
 const TestLibrary = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeModal, setActiveModal] = useState(null); // { testID, pin }
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    confirmText: 'Confirm',
+    confirmColor: '#2563eb'
+  });
+
+  const openConfirm = (title, message, onConfirm, confirmText = 'Confirm', confirmColor = '#2563eb') => {
+    setConfirmConfig({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        closeConfirm();
+      },
+      confirmText,
+      confirmColor
+    });
+  };
+
+  const closeConfirm = () => {
+    setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   const fetchTests = async () => {
     try {
@@ -26,9 +53,32 @@ const TestLibrary = () => {
   }, []);
 
   const updateStatus = async (testId, newStatus, pin) => {
-    if (newStatus === 'active' && !window.confirm("Are you sure you want to publish this test? Students will be able to access it.")) return;
-    if (newStatus === 'completed' && !window.confirm("Are you sure you want to end this exam? Students will no longer be able to submit.")) return;
+    if (newStatus === 'active') {
+      openConfirm(
+        "Publish Test",
+        "Are you sure you want to publish this test? Students will be able to access it.",
+        () => performUpdateStatus(testId, newStatus, pin),
+        "Publish",
+        "#10b981"
+      );
+      return;
+    }
+    
+    if (newStatus === 'completed') {
+      openConfirm(
+        "End Exam",
+        "Are you sure you want to end this exam? Students will no longer be able to submit.",
+        () => performUpdateStatus(testId, newStatus, pin),
+        "End Exam",
+        "#ef4444"
+      );
+      return;
+    }
 
+    performUpdateStatus(testId, newStatus, pin);
+  };
+
+  const performUpdateStatus = async (testId, newStatus, pin) => {
     try {
       await axios.put(`/api/exam/tests/${testId}/status`, { status: newStatus });
       fetchTests();
@@ -45,16 +95,22 @@ const TestLibrary = () => {
     window.open(`http://${window.location.hostname}:8000/api/exam/tests/${testId}/export`, '_blank');
   };
 
-  const handleDelete = async (testId) => {
-    if (window.confirm("Are you sure you want to delete this test? This action cannot be undone.")) {
-      try {
-        await axios.delete(`/api/exam/tests/${testId}`);
-        setTests(prev => prev.filter(t => t._id !== testId));
-      } catch (err) {
-        console.error('Error deleting test:', err);
-        alert('Failed to delete test.');
-      }
-    }
+  const handleDelete = (testId) => {
+    openConfirm(
+      "Delete Test",
+      "Are you sure you want to delete this test? This action cannot be undone.",
+      async () => {
+        try {
+          await axios.delete(`/api/exam/tests/${testId}`);
+          setTests(prev => prev.filter(t => t._id !== testId));
+        } catch (err) {
+          console.error('Error deleting test:', err);
+          alert('Failed to delete test.');
+        }
+      },
+      "Delete",
+      "#ef4444"
+    );
   };
 
   return (
@@ -172,6 +228,17 @@ const TestLibrary = () => {
           </div>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={closeConfirm}
+        confirmText={confirmConfig.confirmText}
+        confirmColor={confirmConfig.confirmColor}
+      />
     </div>
   );
 };

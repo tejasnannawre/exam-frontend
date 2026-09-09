@@ -460,9 +460,7 @@ const StudentActiveTest = ({ testId }) => {
                 Go Back
               </button>
               <button onClick={() => {
-                if (window.confirm("Are you sure you want to submit? You cannot change your answers later.")) {
-                  submitTest(false);
-                }
+                submitTest(false);
               }} style={{ flex: 1, padding: '12px', backgroundColor: '#9333ea', border: 'none', borderRadius: '8px', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
                 Yes, Submit
               </button>
