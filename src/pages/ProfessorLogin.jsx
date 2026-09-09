@@ -5,13 +5,31 @@ const ProfessorLogin = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin') {
-      localStorage.setItem('username', username);
-      onLogin();
-    } else {
-      setError('Invalid username or password. Try admin / admin');
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('https://exam-backend-bog8.onrender.com/api/professor/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      if (response.ok) {
+        localStorage.setItem('username', username);
+        onLogin();
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Invalid username or password');
+      }
+    } catch (err) {
+      setError('An error occurred while communicating with the server.');
+    } finally {
+      setLoading(false);
     }
   };
 
