@@ -132,7 +132,7 @@ const TestCreator = () => {
       <h3 className="mb-3">Create Custom Test</h3>
       
       {!testResult ? (
-        <form onSubmit={handleSubmit} className="flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           
           {/* Test Metadata */}
           <div className="grid grid-cols-2 gap-3">
@@ -235,7 +235,7 @@ const TestCreator = () => {
           </button>
         </form>
       ) : (
-        <div className="flex-col items-center gap-4 text-center" style={{ padding: '2rem 1rem' }}>
+        <div className="flex flex-col items-center gap-4 text-center" style={{ padding: '2rem 1rem' }}>
           <h2 style={{ color: 'var(--success)', margin: 0 }}>Test Generated Successfully!</h2>
           <div style={{ padding: '2rem', backgroundColor: '#f1f5f9', borderRadius: 'var(--radius-md)', width: '100%', maxWidth: '400px' }}>
             <h1 style={{ fontSize: '3rem', margin: '0 0 0.5rem 0', letterSpacing: '0.2em' }}>{testResult.PIN}</h1>
@@ -247,7 +247,7 @@ const TestCreator = () => {
           </div>
           <div className="grid grid-cols-2 gap-3 w-full" style={{ maxWidth: '400px' }}>
             <button onClick={() => { navigator.clipboard.writeText(testUrl); alert("URL Copied to clipboard!"); }} className="btn btn-secondary w-full">Copy Link</button>
-            <button onClick={() => { setTestResult(null); setTestName(''); setDivision(''); setSelectedQuestions([]); }} className="btn btn-primary w-full">Create Another</button>
+            <button onClick={() => { setTestResult(null); setTestName(''); setDivision(''); setSelectedQuestions([]); }} className="btn btn-primary w-full">Save Test</button>
           </div>
         </div>
       )}
