@@ -213,8 +213,14 @@ const TestLibrary = () => {
               <h1 style={{ fontSize: '3rem', margin: '0 0 0.5rem 0', letterSpacing: '0.2em' }}>{activeModal.pin}</h1>
               <p className="text-muted" style={{ margin: 0, fontWeight: '600', textTransform: 'uppercase' }}>Test PIN</p>
             </div>
-            <div style={{ padding: '1rem', border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', display: 'inline-block', marginBottom: '1.5rem', backgroundColor: 'white' }}>
-              <QRCodeSVG value={`${window.location.origin}/test/${activeModal.testID}`} size={200} level="H" />
+            <div style={{ padding: '16px', border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', display: 'inline-block', marginBottom: '1.5rem', backgroundColor: '#FFFFFF' }}>
+              <QRCodeSVG 
+                value={`${window.location.origin}/test/${activeModal.testID}`} 
+                size={200} 
+                level="H" 
+                bgColor="#FFFFFF"
+                fgColor="#000000"
+              />
             </div>
             <button 
               onClick={() => setActiveModal(null)}
