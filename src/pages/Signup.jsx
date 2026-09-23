@@ -33,7 +33,11 @@ const Signup = () => {
       setSuccess("Registration successful! You can now log in.");
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred during registration.');
+      if (!err.response) {
+        setError('Network Error: Could not reach the backend server. Please check if Uvicorn is running.');
+      } else {
+        setError(err.response?.data?.detail || 'An error occurred during registration.');
+      }
     } finally {
       setLoading(false);
     }

@@ -20,7 +20,11 @@ const Login = () => {
       localStorage.setItem('username', response.data.username);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid username or password');
+      if (!err.response) {
+        setError('Network Error: Could not reach the backend server. Please check if Uvicorn is running.');
+      } else {
+        setError(err.response?.data?.detail || 'Invalid username or password');
+      }
     } finally {
       setLoading(false);
     }
