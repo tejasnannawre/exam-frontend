@@ -331,3 +331,240 @@ select.form-control option {
   box-shadow: var(--shadow-lg);
   animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Navbar */
+.navbar {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--border);
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(to right, var(--primary), #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.025em;
+}
+
+.navbar-tabs {
+  display: flex;
+  gap: 1.5rem;
+  height: 100%;
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+  padding: 0 0.5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  transition: var(--transition);
+}
+
+.nav-tab:hover {
+  color: var(--primary);
+}
+
+.nav-tab.active {
+  color: var(--primary);
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--primary);
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+.settings-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-btn:hover {
+  background-color: #f1f5f9;
+  color: var(--primary);
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -320px;
+  width: 320px;
+  height: 100vh;
+  background: var(--surface);
+  box-shadow: -4px 0 15px rgba(0, 0, 0, 0.1);
+  z-index: 101;
+  transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.open {
+  right: 0;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--text-main);
+}
+
+.sidebar-content {
+  padding: 1.5rem;
+  flex: 1;
+}
+
+/* Mobile Responsiveness Improvements */
+.mobile-menu-btn {
+  display: none;
+}
+
+.mobile-dropdown-menu {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide Desktop Tabs */
+  .desktop-tabs {
+    display: none !important;
+  }
+  
+  /* Show Mobile Nav */
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .mobile-dropdown-menu {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: absolute;
+    width: 100%;
+    z-index: 45;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .mobile-nav-tab {
+    background: transparent;
+    border: none;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  
+  .mobile-nav-tab:last-child {
+    border-bottom: none;
+  }
+
+  .mobile-nav-tab.active {
+    color: var(--primary);
+    background-color: #f8fafc;
+  }
+
+  /* Reduce Card Padding */
+  .card {
+    padding: 15px;
+  }
+
+  /* Standardize Buttons on Mobile */
+  .btn {
+    padding: 10px 15px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Stack Settings and flex items */
+  .flex.gap-4 {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  /* Make sure container doesn't overflow */
+  .app-container {
+    overflow-x: hidden;
+  }
+}

@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import TestCreator from '../components/TestCreator';
 import TestLibrary from '../components/TestLibrary';
 import QuestionBank from '../components/QuestionBank';
+import Navbar from '../components/Navbar';
 
 const ProfessorDashboard = () => {
   const [activeTab, setActiveTab] = useState('library');
   const [selectedFile, setSelectedFile] = useState(null);
+  const [courseName, setCourseName] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -25,8 +27,8 @@ const ProfessorDashboard = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      setMessage({ text: 'Please select a file first.', type: 'error' });
+    if (!selectedFile || !courseName) {
+      setMessage({ text: 'Please fill in Course Name and select a file first.', type: 'error' });
       return;
     }
 
@@ -35,10 +37,14 @@ const ProfessorDashboard = () => {
 
     const formData = new FormData();
     formData.append('file', selectedFile);
+    formData.append('course_name', courseName);
 
     try {
-      const response = await fetch('https://exam-backend-bog8.onrender.com/api/professor/upload-excel', {
+      const response = await fetch('http://127.0.0.1:8000/api/professor/upload-excel', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: formData,
       });
 
@@ -68,9 +74,12 @@ const ProfessorDashboard = () => {
     setPasswordMessage({ text: '', type: '' });
 
     try {
-      const response = await fetch('https://exam-backend-bog8.onrender.com/api/professor/update-password', {
+      const response = await fetch('http://127.0.0.1:8000/api/professor/update-password', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           username: localStorage.getItem('username') || 'admin',
           current_password: passwordForm.currentPassword,
@@ -95,28 +104,13 @@ const ProfessorDashboard = () => {
   };
 
   return (
-    <div className="container">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="mb-0">Professor Dashboard</h2>
-        <button
-          onClick={() => setShowPasswordModal(true)}
-          className="btn btn-secondary"
-        >
-          Change Password
-        </button>
-      </div>
-
-      <div className="tabs">
-        <button className={`tab ${activeTab === 'library' ? 'active' : ''}`} onClick={() => setActiveTab('library')}>
-          Test Library
-        </button>
-        <button className={`tab ${activeTab === 'create' ? 'active' : ''}`} onClick={() => setActiveTab('create')}>
-          Create Test
-        </button>
-        <button className={`tab ${activeTab === 'upload' ? 'active' : ''}`} onClick={() => setActiveTab('upload')}>
-          Question Bank
-        </button>
-      </div>
+    <>
+      <Navbar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        setShowPasswordModal={setShowPasswordModal} 
+      />
+      <div className="container">
 
       <div className="mt-4">
         {activeTab === 'upload' && (
@@ -124,22 +118,34 @@ const ProfessorDashboard = () => {
             <h3>Upload Question Bank</h3>
             <p className="text-muted mb-3">Upload an Excel file (.xlsx) containing your questions.</p>
 
-            <div className="flex gap-3 items-center flex-wrap">
-              <input
-                id="excel-upload"
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={handleFileChange}
-                className="form-control flex-grow"
-                style={{ flex: '1 1 200px' }}
-              />
-              <button
-                onClick={handleUpload}
-                disabled={loading || !selectedFile}
-                className="btn btn-primary"
-              >
-                {loading ? 'Uploading...' : 'Upload'}
-              </button>
+            <div className="flex flex-col gap-3">
+              <div className="form-group mb-0">
+                <label className="form-label">Course Name</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={courseName} 
+                  onChange={e => setCourseName(e.target.value)} 
+                  placeholder="e.g. Data Structures"
+                />
+              </div>
+              <div className="flex gap-3 items-center flex-wrap">
+                <input
+                  id="excel-upload"
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={handleFileChange}
+                  className="form-control flex-grow"
+                  style={{ flex: '1 1 200px' }}
+                />
+                <button
+                  onClick={handleUpload}
+                  disabled={loading || !selectedFile || !courseName}
+                  className="btn btn-primary"
+                >
+                  {loading ? 'Uploading...' : 'Upload'}
+                </button>
+              </div>
             </div>
 
             {message.text && (
@@ -213,6 +219,7 @@ const ProfessorDashboard = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

@@ -214,12 +214,12 @@ const StudentActiveTest = ({ testId }) => {
 
   if (authStage) {
     return (
-      <div className="flex items-center justify-center app-container">
-        <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem' }}>
+      <div className="flex items-center justify-center app-container" style={{ padding: '1rem', boxSizing: 'border-box' }}>
+        <div className="card" style={{ width: '100%', maxWidth: '400px', boxSizing: 'border-box', margin: '0' }}>
           <h2 className="text-center mb-4">Join Examination</h2>
           {authError && <div className="alert alert-error">{authError}</div>}
           
-          <form onSubmit={verifyPin} className="flex-col gap-3">
+          <form onSubmit={verifyPin} className="flex-col gap-3" style={{ width: '100%', boxSizing: 'border-box' }}>
             <div className="form-group">
               <label className="form-label">Full Name</label>
               <input type="text" className="form-control" required value={name} onChange={e => setName(e.target.value)} placeholder="John Doe" />
@@ -233,7 +233,7 @@ const StudentActiveTest = ({ testId }) => {
               <input type="text" className="form-control text-center" required maxLength={4} value={pin} onChange={e => setPin(e.target.value)} placeholder="----" style={{ fontSize: '1.5rem', letterSpacing: '0.5em' }} />
             </div>
             
-            <button type="submit" disabled={authLoading} className="btn btn-primary mt-2">
+            <button type="submit" disabled={authLoading} className="btn btn-primary mt-2" style={{ width: '100%', boxSizing: 'border-box' }}>
               {authLoading ? 'Verifying...' : 'Enter Test'}
             </button>
             <p className="text-muted text-center mt-2" style={{ fontSize: '0.75rem' }}>

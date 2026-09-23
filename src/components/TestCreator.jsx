@@ -7,6 +7,9 @@ const TestCreator = () => {
   const [division, setDivision] = useState('');
   const [randomized, setRandomized] = useState(true);
   
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState('');
+
   const [availableUnits, setAvailableUnits] = useState([]);
   const [subtopicsCache, setSubtopicsCache] = useState({});
   
@@ -21,21 +24,43 @@ const TestCreator = () => {
   const [testResult, setTestResult] = useState(null);
 
   useEffect(() => {
-    const fetchUnits = async () => {
+    const fetchCourses = async () => {
       try {
-        const response = await axios.get('/api/exam/units');
-        setAvailableUnits(response.data.units || []);
+        const response = await axios.get('/api/exam/courses');
+        setAvailableCourses(response.data.courses || []);
       } catch (error) {
-        console.error("Error fetching units:", error);
+        console.error("Error fetching courses:", error);
       }
     };
-    fetchUnits();
+    fetchCourses();
   }, []);
+
+  const fetchUnitsForCourse = async (courseName) => {
+    try {
+      const response = await axios.get(`/api/exam/units?course_name=${encodeURIComponent(courseName)}`);
+      setAvailableUnits(response.data.units || []);
+    } catch (error) {
+      console.error("Error fetching units:", error);
+    }
+  };
+
+  const handleCourseChange = (e) => {
+    const course = e.target.value;
+    setSelectedCourse(course);
+    setSelectedUnit('');
+    setSelectedSubtopic('');
+    setAvailableUnits([]);
+    setAvailableQuestions([]);
+    setSubtopicsCache({}); // Clear subtopics cache when course changes
+    if (course) {
+      fetchUnitsForCourse(course);
+    }
+  };
 
   const fetchSubtopicsForUnit = async (unit) => {
     if (!unit || subtopicsCache[unit]) return;
     try {
-      const response = await axios.get(`/api/exam/subtopics/${encodeURIComponent(unit)}`);
+      const response = await axios.get(`/api/exam/subtopics/${encodeURIComponent(unit)}?course_name=${encodeURIComponent(selectedCourse)}`);
       setSubtopicsCache(prev => ({ ...prev, [unit]: response.data.subtopics || [] }));
     } catch (error) {
       console.error(`Error fetching subtopics for ${unit}:`, error);
@@ -61,6 +86,7 @@ const TestCreator = () => {
         const params = new URLSearchParams();
         params.append('unit', selectedUnit);
         params.append('subtopic', subtopic);
+        params.append('course_name', selectedCourse);
         
         const response = await axios.get(`/api/professor/questions?${params.toString()}`);
         setAvailableQuestions(response.data.questions || []);
@@ -86,8 +112,8 @@ const TestCreator = () => {
     setMessage({ text: '', type: '' });
     setTestResult(null);
 
-    if (!testName || !division) {
-      setMessage({ text: 'Please fill in Test Name and Division', type: 'error' });
+    if (!testName || !division || !selectedCourse) {
+      setMessage({ text: 'Please fill in Test Name, Division, and select a Course', type: 'error' });
       setLoading(false);
       return;
     }
@@ -102,6 +128,7 @@ const TestCreator = () => {
       const payload = {
         TestName: testName,
         Division: division,
+        CourseName: selectedCourse,
         QuestionIDs: selectedQuestions,
         Randomized: randomized
       };
@@ -134,6 +161,14 @@ const TestCreator = () => {
       {!testResult ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           
+          <div className="form-group mb-0">
+            <label className="form-label">Select Course</label>
+            <select className="form-control" value={selectedCourse} onChange={handleCourseChange} required>
+              <option value="">-- Choose a Course --</option>
+              {availableCourses.map(course => <option key={course} value={course}>{course}</option>)}
+            </select>
+          </div>
+
           {/* Test Metadata */}
           <div className="grid grid-cols-2 gap-3">
             <div className="form-group mb-0">
@@ -158,7 +193,7 @@ const TestCreator = () => {
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="form-group mb-0">
                 <label className="form-label">Filter by Unit</label>
-                <select className="form-control" value={selectedUnit} onChange={handleUnitChange}>
+                <select className="form-control" value={selectedUnit} onChange={handleUnitChange} disabled={!selectedCourse}>
                   <option value="">Select Unit</option>
                   {availableUnits.map(unit => <option key={unit} value={unit}>{unit}</option>)}
                 </select>
@@ -178,33 +213,52 @@ const TestCreator = () => {
                 {availableQuestions.length === 0 ? (
                   <div className="text-center text-muted" style={{ padding: '2rem' }}>No questions found for this subtopic.</div>
                 ) : (
-                  availableQuestions.map((q, idx) => {
-                    const isSelected = selectedQuestions.includes(q._id);
-                    return (
-                      <div key={q._id} className="flex justify-between" style={{ padding: '1rem', borderBottom: idx !== availableQuestions.length - 1 ? '1px solid var(--border)' : 'none', backgroundColor: isSelected ? '#f0fdf4' : 'var(--surface)', transition: 'var(--transition)' }}>
-                        <div style={{ flex: 1, paddingRight: '1rem' }}>
-                          <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.75rem', color: 'var(--text-main)' }}>{q.Question}</div>
-                          <div className="grid grid-cols-2 gap-2 text-muted" style={{ fontSize: '0.875rem' }}>
-                            <div><strong style={{color: 'var(--text-main)'}}>A:</strong> {q.Option_A}</div>
-                            <div><strong style={{color: 'var(--text-main)'}}>B:</strong> {q.Option_B}</div>
-                            <div><strong style={{color: 'var(--text-main)'}}>C:</strong> {q.Option_C}</div>
-                            <div><strong style={{color: 'var(--text-main)'}}>D:</strong> {q.Option_D}</div>
+                  <>
+                    <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', backgroundColor: '#f8fafc', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input 
+                        type="checkbox"
+                        checked={availableQuestions.length > 0 && availableQuestions.every(q => selectedQuestions.includes(q._id))}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const newIds = availableQuestions.map(q => q._id).filter(id => !selectedQuestions.includes(id));
+                            setSelectedQuestions([...selectedQuestions, ...newIds]);
+                          } else {
+                            const visibleIds = availableQuestions.map(q => q._id);
+                            setSelectedQuestions(selectedQuestions.filter(id => !visibleIds.includes(id)));
+                          }
+                        }}
+                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                      />
+                      <label style={{ fontWeight: '600', cursor: 'pointer', margin: 0 }}>Select All Visible Questions</label>
+                    </div>
+                    {availableQuestions.map((q, idx) => {
+                      const isSelected = selectedQuestions.includes(q._id);
+                      return (
+                        <div key={q._id} className="flex justify-between items-start" style={{ padding: '1rem', borderBottom: idx !== availableQuestions.length - 1 ? '1px solid var(--border)' : 'none', backgroundColor: isSelected ? '#f0fdf4' : 'var(--surface)', transition: 'var(--transition)' }}>
+                          <div style={{ marginRight: '1rem', marginTop: '0.2rem' }}>
+                            <input 
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleQuestionSelection(q._id)}
+                              style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                            />
                           </div>
-                          <div className="mt-2" style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: '600' }}>
-                            Correct Answer: {q.Correct_Answer}
+                          <div style={{ flex: 1, paddingRight: '1rem' }}>
+                            <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.75rem', color: 'var(--text-main)' }}>{q.Question}</div>
+                            <div className="grid grid-cols-2 gap-2 text-muted" style={{ fontSize: '0.875rem' }}>
+                              <div><strong style={{color: 'var(--text-main)'}}>A:</strong> {q.Option_A}</div>
+                              <div><strong style={{color: 'var(--text-main)'}}>B:</strong> {q.Option_B}</div>
+                              <div><strong style={{color: 'var(--text-main)'}}>C:</strong> {q.Option_C}</div>
+                              <div><strong style={{color: 'var(--text-main)'}}>D:</strong> {q.Option_D}</div>
+                            </div>
+                            <div className="mt-2" style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: '600' }}>
+                              Correct Answer: {q.Correct_Answer}
+                            </div>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => toggleQuestionSelection(q._id)}
-                          className={`btn ${isSelected ? 'btn-danger' : 'btn-primary'}`}
-                          style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', minWidth: '90px', alignSelf: 'flex-start' }}
-                        >
-                          {isSelected ? 'Remove' : 'Add'}
-                        </button>
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </>
                 )}
               </div>
             )}

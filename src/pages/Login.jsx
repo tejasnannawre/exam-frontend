@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 
-const ProfessorLogin = ({ onLogin }) => {
+const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,21 +15,12 @@ const ProfessorLogin = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await fetch('https://exam-backend-bog8.onrender.com/api/professor/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      
-      if (response.ok) {
-        localStorage.setItem('username', username);
-        onLogin();
-      } else {
-        const data = await response.json();
-        setError(data.detail || 'Invalid username or password');
-      }
+      const response = await axios.post('/api/auth/login', { username, password });
+      localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('username', response.data.username);
+      navigate('/');
     } catch (err) {
-      setError('An error occurred while communicating with the server.');
+      setError(err.response?.data?.detail || 'Invalid username or password');
     } finally {
       setLoading(false);
     }
@@ -73,10 +66,16 @@ const ProfessorLogin = ({ onLogin }) => {
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
+          
+          <div className="text-center mt-4">
+            <p className="text-muted" style={{ fontSize: '0.875rem' }}>
+              Don't have an account? <Link to="/signup" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '500' }}>Sign up</Link>
+            </p>
+          </div>
         </form>
       </div>
     </div>
   );
 };
 
-export default ProfessorLogin;
+export default Login;

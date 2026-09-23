@@ -5,6 +5,11 @@ import ConfirmModal from './ConfirmModal';
 const QuestionBank = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState('');
+
+  const [selectedToDelete, setSelectedToDelete] = useState([]);
+
   const [availableUnits, setAvailableUnits] = useState([]);
   const [subtopicsCache, setSubtopicsCache] = useState({});
   
@@ -39,21 +44,42 @@ const QuestionBank = () => {
   };
 
   useEffect(() => {
-    const fetchUnits = async () => {
+    const fetchCourses = async () => {
       try {
-        const response = await axios.get('/api/exam/units');
-        setAvailableUnits(response.data.units || []);
+        const response = await axios.get('/api/exam/courses');
+        setAvailableCourses(response.data.courses || []);
       } catch (error) {
-        console.error("Error fetching units:", error);
+        console.error("Error fetching courses:", error);
       }
     };
-    fetchUnits();
+    fetchCourses();
   }, []);
+
+  const fetchUnitsForCourse = async (courseName) => {
+    try {
+      const response = await axios.get(`/api/exam/units?course_name=${encodeURIComponent(courseName)}`);
+      setAvailableUnits(response.data.units || []);
+    } catch (error) {
+      console.error("Error fetching units:", error);
+    }
+  };
+
+  const handleCourseChange = (e) => {
+    const course = e.target.value;
+    setSelectedCourse(course);
+    setSelectedUnit('');
+    setSelectedSubtopic('');
+    setAvailableUnits([]);
+    setSubtopicsCache({});
+    if (course) {
+      fetchUnitsForCourse(course);
+    }
+  };
 
   const fetchSubtopicsForUnit = async (unit) => {
     if (!unit || subtopicsCache[unit]) return;
     try {
-      const response = await axios.get(`/api/exam/subtopics/${encodeURIComponent(unit)}`);
+      const response = await axios.get(`/api/exam/subtopics/${encodeURIComponent(unit)}?course_name=${encodeURIComponent(selectedCourse)}`);
       setSubtopicsCache(prev => ({ ...prev, [unit]: response.data.subtopics || [] }));
     } catch (error) {
       console.error(`Error fetching subtopics for ${unit}:`, error);
@@ -71,8 +97,10 @@ const QuestionBank = () => {
 
   const fetchQuestions = async () => {
     setLoading(true);
+    setSelectedToDelete([]);
     try {
       const params = new URLSearchParams();
+      if (selectedCourse) params.append('course_name', selectedCourse);
       if (selectedUnit) params.append('unit', selectedUnit);
       if (selectedSubtopic) params.append('subtopic', selectedSubtopic);
       
@@ -87,7 +115,7 @@ const QuestionBank = () => {
 
   useEffect(() => {
     fetchQuestions();
-  }, [selectedUnit, selectedSubtopic]);
+  }, [selectedCourse, selectedUnit, selectedSubtopic]);
 
   const handleDelete = (id) => {
     openConfirm(
@@ -107,6 +135,27 @@ const QuestionBank = () => {
     );
   };
 
+  const handleBulkDelete = () => {
+    openConfirm(
+      "Delete Selected Questions",
+      `Are you sure you want to delete ${selectedToDelete.length} questions? This action cannot be undone.`,
+      async () => {
+        try {
+          await axios.delete('/api/professor/questions/bulk', {
+            data: { question_ids: selectedToDelete }
+          });
+          setQuestions(prev => prev.filter(q => !selectedToDelete.includes(q._id)));
+          setSelectedToDelete([]);
+        } catch (error) {
+          console.error("Error deleting questions:", error);
+          alert("Failed to delete questions.");
+        }
+      },
+      "Delete All",
+      "danger"
+    );
+  };
+
   return (
     <div className="card animate-fade-in">
       <div className="flex justify-between items-center mb-4">
@@ -116,10 +165,18 @@ const QuestionBank = () => {
         </span>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 mb-4" style={{ backgroundColor: '#f1f5f9', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+      <div className="grid grid-cols-3 gap-3 mb-4" style={{ backgroundColor: '#f1f5f9', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+        <div className="form-group mb-0">
+          <label className="form-label" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by Course</label>
+          <select className="form-control" value={selectedCourse} onChange={handleCourseChange}>
+            <option value="">All Courses</option>
+            {availableCourses.map(course => <option key={course} value={course}>{course}</option>)}
+          </select>
+        </div>
+        
         <div className="form-group mb-0">
           <label className="form-label" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>Filter by Unit</label>
-          <select className="form-control" value={selectedUnit} onChange={handleUnitChange}>
+          <select className="form-control" value={selectedUnit} onChange={handleUnitChange} disabled={!selectedCourse}>
             <option value="">All Units</option>
             {availableUnits.map(unit => <option key={unit} value={unit}>{unit}</option>)}
           </select>
@@ -142,48 +199,77 @@ const QuestionBank = () => {
         </div>
       ) : (
         <div style={{ overflowX: 'auto', maxHeight: '600px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+          {selectedToDelete.length > 0 && (
+            <div style={{ padding: '1rem', backgroundColor: '#fef2f2', borderBottom: '1px solid #fecaca', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#b91c1c', fontWeight: '600' }}>{selectedToDelete.length} questions selected</span>
+              <button onClick={handleBulkDelete} className="btn btn-danger" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+                Delete Selected ({selectedToDelete.length})
+              </button>
+            </div>
+          )}
           <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '900px' }}>
             <thead style={{ backgroundColor: '#f1f5f9', position: 'sticky', top: 0, zIndex: 10 }}>
               <tr>
+                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '50px', textAlign: 'center' }}>
+                  <input 
+                    type="checkbox"
+                    checked={questions.length > 0 && questions.every(q => selectedToDelete.includes(q._id))}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedToDelete(questions.map(q => q._id));
+                      } else {
+                        setSelectedToDelete([]);
+                      }
+                    }}
+                    style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                  />
+                </th>
                 <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>Question Details</th>
                 <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '300px' }}>Options</th>
                 <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '150px' }}>Correct Answer</th>
-                <th style={{ padding: '1rem', borderBottom: '1px solid var(--border)', width: '100px', textAlign: 'center' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {questions.map((q, idx) => (
-                <tr key={q._id || idx} style={{ borderBottom: '1px solid var(--border)', backgroundColor: idx % 2 === 0 ? 'var(--surface)' : '#f8fafc', transition: 'var(--transition)' }}>
-                  <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
-                    <div style={{ display: 'inline-block', padding: '2px 8px', backgroundColor: '#e2e8f0', color: 'var(--text-muted)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                      {q.Unit} &bull; {q.Subtopic}
-                    </div>
-                    <div style={{ lineHeight: '1.5', fontWeight: '500', color: 'var(--text-main)' }}>{q.Question}</div>
-                  </td>
-                  <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
-                    <div className="flex-col gap-2 text-muted">
-                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>A</span> <span>{q.Option_A}</span></div>
-                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>B</span> <span>{q.Option_B}</span></div>
-                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>C</span> <span>{q.Option_C}</span></div>
-                      <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>D</span> <span>{q.Option_D}</span></div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
-                    <span style={{ display: 'inline-block', padding: '6px 12px', backgroundColor: '#d1fae5', color: '#059669', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.875rem' }}>
-                      {q.Correct_Answer}
-                    </span>
-                  </td>
-                  <td style={{ padding: '1.5rem', verticalAlign: 'top', textAlign: 'center' }}>
-                    <button 
-                      onClick={() => handleDelete(q._id)}
-                      className="btn"
-                      style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', backgroundColor: 'transparent', color: 'var(--danger)', border: '1px solid var(--danger)' }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {questions.map((q, idx) => {
+                const isSelected = selectedToDelete.includes(q._id);
+                return (
+                  <tr key={q._id || idx} style={{ borderBottom: '1px solid var(--border)', backgroundColor: isSelected ? '#fef2f2' : (idx % 2 === 0 ? 'var(--surface)' : '#f8fafc'), transition: 'var(--transition)' }}>
+                    <td style={{ padding: '1.5rem', verticalAlign: 'top', textAlign: 'center' }}>
+                      <input 
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          if (isSelected) {
+                            setSelectedToDelete(prev => prev.filter(id => id !== q._id));
+                          } else {
+                            setSelectedToDelete(prev => [...prev, q._id]);
+                          }
+                        }}
+                        style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                      />
+                    </td>
+                    <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
+                      <div style={{ display: 'inline-block', padding: '2px 8px', backgroundColor: '#e2e8f0', color: 'var(--text-muted)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                        {q.Unit} &bull; {q.Subtopic}
+                      </div>
+                      <div style={{ lineHeight: '1.5', fontWeight: '500', color: 'var(--text-main)' }}>{q.Question}</div>
+                    </td>
+                    <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
+                      <div className="flex-col gap-2 text-muted">
+                        <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>A</span> <span>{q.Option_A}</span></div>
+                        <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>B</span> <span>{q.Option_B}</span></div>
+                        <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>C</span> <span>{q.Option_C}</span></div>
+                        <div className="flex gap-2"><span style={{ fontWeight: '600', width: '20px' }}>D</span> <span>{q.Option_D}</span></div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
+                      <span style={{ display: 'inline-block', padding: '6px 12px', backgroundColor: '#d1fae5', color: '#059669', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                        {q.Correct_Answer}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
