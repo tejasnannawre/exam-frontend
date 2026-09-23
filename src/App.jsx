@@ -6,8 +6,8 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 
 import axios from 'axios';
-// Using the backend URL from the original code
-axios.defaults.baseURL = 'http://127.0.0.1:8000'; // Set to localhost for testing the new features
+// Set default backend URL to the live Render server
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://exam-backend-bog8.onrender.com';
 
 // Add a request interceptor to include the JWT token in all requests
 axios.interceptors.request.use(
@@ -19,6 +19,19 @@ axios.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Add a response interceptor to handle 401 Unauthorized errors
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
 );
 
 // Protected Route Component
