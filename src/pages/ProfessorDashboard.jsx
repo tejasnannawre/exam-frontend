@@ -3,6 +3,7 @@ import TestCreator from '../components/TestCreator';
 import TestLibrary from '../components/TestLibrary';
 import QuestionBank from '../components/QuestionBank';
 import Navbar from '../components/Navbar';
+import axios from 'axios';
 
 const ProfessorDashboard = () => {
   const [activeTab, setActiveTab] = useState('library');
@@ -40,25 +41,21 @@ const ProfessorDashboard = () => {
     formData.append('course_name', courseName);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/professor/upload-excel', {
-        method: 'POST',
+      const response = await axios.post('/api/professor/upload-excel', formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage({ text: data.message, type: 'success' });
+      if (response.status === 200) {
+        setMessage({ text: response.data.message, type: 'success' });
         setSelectedFile(null);
+        setCourseName('');
         document.getElementById('excel-upload').value = '';
-      } else {
-        setMessage({ text: data.detail || 'Failed to upload file.', type: 'error' });
       }
     } catch (error) {
-      setMessage({ text: 'An error occurred during upload. Is the backend running?', type: 'error' });
+      setMessage({ text: error.response?.data?.detail || 'An error occurred during upload. Is the backend running?', type: 'error' });
       console.error("Upload error:", error);
     } finally {
       setLoading(false);
