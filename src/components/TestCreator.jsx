@@ -244,7 +244,7 @@ const TestCreator = () => {
                             />
                           </div>
                           <div style={{ flex: 1, paddingRight: '1rem' }}>
-                            <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.75rem', color: 'var(--text-main)' }}>{q.Question}</div>
+                            <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.75rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{q.Question}</div>
                             <div className="grid grid-cols-2 gap-2 text-muted" style={{ fontSize: '0.875rem' }}>
                               <div><strong style={{color: 'var(--text-main)'}}>A:</strong> {q.Option_A}</div>
                               <div><strong style={{color: 'var(--text-main)'}}>B:</strong> {q.Option_B}</div>

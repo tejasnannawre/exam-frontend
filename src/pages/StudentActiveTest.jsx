@@ -304,7 +304,7 @@ const StudentActiveTest = ({ testId }) => {
                 <span style={{ backgroundColor: '#f1f5f9', color: 'var(--text-main)', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '0.875rem', fontWeight: '600' }}>{q.Unit}</span>
               </div>
 
-              <h3 style={{ fontSize: '1.25rem', lineHeight: '1.5', marginBottom: '2rem' }}>{q.Question}</h3>
+              <h3 style={{ fontSize: '1.25rem', lineHeight: '1.5', marginBottom: '2rem', whiteSpace: 'pre-wrap' }}>{q.Question}</h3>
 
               <div className="flex-col gap-3 mb-4">
                 {['Option_A', 'Option_B', 'Option_C', 'Option_D'].map((optKey, idx) => {

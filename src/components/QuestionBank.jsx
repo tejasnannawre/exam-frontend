@@ -252,7 +252,8 @@ const QuestionBank = () => {
                       <div style={{ display: 'inline-block', padding: '2px 8px', backgroundColor: '#e2e8f0', color: 'var(--text-muted)', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '600', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
                         {q.Unit} &bull; {q.Subtopic}
                       </div>
-                      <div style={{ lineHeight: '1.5', fontWeight: '500', color: 'var(--text-main)' }}>{q.Question}</div>
+                      <div style={{ lineHeight: '1.5', fontWeight: '500', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{q.Question}</div>
+
                     </td>
                     <td style={{ padding: '1.5rem', verticalAlign: 'top' }}>
                       <div className="flex-col gap-2 text-muted">
