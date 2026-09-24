@@ -91,8 +91,38 @@ const TestLibrary = () => {
     }
   };
 
-  const handleDownload = (testId) => {
-    window.open(`http://${window.location.hostname}:8000/api/exam/tests/${testId}/export`, '_blank');
+  const handleDownload = async (testId) => {
+    try {
+      const response = await axios.get(`/api/exam/tests/${testId}/export`, {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      let fileName = 'Results.xlsx';
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (fileNameMatch && fileNameMatch.length === 2) {
+          fileName = fileNameMatch[1];
+        }
+      }
+      
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading results:', err);
+      alert('Failed to download results.');
+    }
   };
 
   const handleDelete = (testId) => {
